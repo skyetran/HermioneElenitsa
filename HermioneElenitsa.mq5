@@ -15,7 +15,7 @@ extern string              Text3                            = "Primary Indicator
 input  int                 EhlerFisherPeriod                = 32;
 
 extern string              Text4                            = "Secondary Indicator Settings";
-input  int                 VortexPeriod                     = 7;
+input  int                 VortexPeriod                     = 5;
 
 extern string              Text5                            = "Volume Indicator Settings";
 input  int                 FastMACDPeriod                   = 20;
