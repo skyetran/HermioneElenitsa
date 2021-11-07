@@ -35,34 +35,34 @@ IndicatorProcessor *IndicatorProcessor::GetInstance(void) {
 }
 
 //--- Debug Functions
-string IndicatorProcessor::GetDebugMsg(void) {
+string IndicatorProcessor::GetDebugMsg(void) const {
    string Msg = "";
-   Msg += "Baseline Value: "                    + DoubleToString(GetBaselineValue(CURRENT_BAR))                + "\n";
-   Msg += "Is Above Baseline: "                 + (IsAboveBaseline(CURRENT_BAR) ? "Yes" : "No")                + "\n";
-   Msg += "Is Below Baseline: "                 + (IsBelowBaseline(CURRENT_BAR) ? "Yes" : "No")                + "\n";
-   Msg += "Is Primary Confirmation Bullish: "   + (IsPrimaryConfirmationBullish(CURRENT_BAR) ? "Yes" : "No")   + "\n";
-   Msg += "Is Primary Confirmation Bearish: "   + (IsPrimaryConfirmationBearish(CURRENT_BAR) ? "Yes" : "No")   + "\n";
-   Msg += "Is Secondary Confirmation Bullish: " + (IsSecondaryConfirmationBullish(CURRENT_BAR) ? "Yes" : "No") + "\n";
-   Msg += "Is Secondary Confirmation Bearish: " + (IsSecondaryConfirmationBearish(CURRENT_BAR) ? "Yes" : "No") + "\n";
-   Msg += "Is Dead Market: "                    + (IsDeadMarket(CURRENT_BAR) ? "Yes" : "No")                   + "\n";
-   Msg += "Is Active Market: "                  + (IsActiveMarket(CURRENT_BAR) ? "Yes" : "No")                 + "\n";
-   Msg += "Should Exit Long: "                  + (ShouldExitLong(CURRENT_BAR) ? "Yes" : "No")                 + "\n";
-   Msg += "Should Exit Short: "                 + (ShouldExitShort(CURRENT_BAR) ? "Yes" : "No")                + "\n";
-   Msg += "ATR Value: "                         + DoubleToString(GetATRValue(CURRENT_BAR))                     + "\n";
-   Msg += "Close Spread: "                      + IntegerToString(GetCloseSpreadInPts(CURRENT_BAR))            + "\n";
-   Msg += "Average Spread: "                    + IntegerToString(GetAverageSpreadInPts(CURRENT_BAR))          + "\n";
+   Msg += "Baseline Value: "                    + DoubleToString(GetBaselineValue(CURRENT_BAR))                  + "\n";
+   Msg += "Is Above Baseline: "                 + (IsAboveBaseline(CURRENT_BAR) ? "Yes" : "No")                  + "\n";
+   Msg += "Is Below Baseline: "                 + (IsBelowBaseline(CURRENT_BAR) ? "Yes" : "No")                  + "\n";
+   Msg += "Is Primary Confirmation Bullish: "   + (IsPrimaryConfirmationBullish(CURRENT_BAR) ? "Yes" : "No")     + "\n";
+   Msg += "Is Primary Confirmation Bearish: "   + (IsPrimaryConfirmationBearish(CURRENT_BAR) ? "Yes" : "No")     + "\n";
+   Msg += "Is Secondary Confirmation Bullish: " + (IsSecondaryConfirmationBullish(CURRENT_BAR) ? "Yes" : "No")   + "\n";
+   Msg += "Is Secondary Confirmation Bearish: " + (IsSecondaryConfirmationBearish(CURRENT_BAR) ? "Yes" : "No")   + "\n";
+   Msg += "Is Dead Market: "                    + (IsDeadMarket(CURRENT_BAR) ? "Yes" : "No")                     + "\n";
+   Msg += "Is Active Market: "                  + (IsActiveMarket(CURRENT_BAR) ? "Yes" : "No")                   + "\n";
+   Msg += "Should Exit Long: "                  + (ShouldExitLongFromExitIndicator(CURRENT_BAR) ? "Yes" : "No")  + "\n";
+   Msg += "Should Exit Short: "                 + (ShouldExitShortFromExitIndicator(CURRENT_BAR) ? "Yes" : "No") + "\n";
+   Msg += "ATR Value: "                         + DoubleToString(GetATRValue(CURRENT_BAR))                       + "\n";
+   Msg += "Close Spread: "                      + IntegerToString(GetCloseSpreadInPts(CURRENT_BAR))              + "\n";
+   Msg += "Average Spread: "                    + IntegerToString(GetAverageSpreadInPts(CURRENT_BAR))            + "\n";
    return Msg;
 }
 
 //--- OnInit Functions
 void IndicatorProcessor::Init(void) {
-   BaselineHandle              = iCustom(SymbolInfo.Name(), Period(), "twopolesupersmootherfilter", SuperSmootherPeriod);
-   PrimaryConfirmationHandle   = iCustom(SymbolInfo.Name(), Period(), "Ehlers Fisher transform (original)", EhlerFisherPeriod);
-   SecondaryConfirmationHandle = iCustom(SymbolInfo.Name(), Period(), "Vortex", VortexPeriod);
-   VolumeHandle                = iCustom(SymbolInfo.Name(), Period(), "waddah_attar_explosion", FastMACDPeriod, SlowMACDPeriod, BollingerPeriod, BollingerDeviation, Sensitive, DeathZone, ExplosionPower, TrendPower);
-   ExitHandle                  = iCustom(SymbolInfo.Name(), Period(), "jurik_filter", JurikPeriod, JurikPhase);
-   ATRHandle                   = iCustom(SymbolInfo.Name(), Period(), "Examples/ATR", ATRPeriod);
-   SpreadHandle                = iCustom(SymbolInfo.Name(), Period(), "Spread_Record");
+   BaselineHandle              = iCustom(SymbolInfo.Name(), PERIOD_D1, "twopolesupersmootherfilter", SuperSmootherPeriod);
+   PrimaryConfirmationHandle   = iCustom(SymbolInfo.Name(), PERIOD_D1, "Ehlers Fisher transform (original)", EhlerFisherPeriod);
+   SecondaryConfirmationHandle = iCustom(SymbolInfo.Name(), PERIOD_D1, "Vortex", VortexPeriod);
+   VolumeHandle                = iCustom(SymbolInfo.Name(), PERIOD_D1, "waddah_attar_explosion", FastMACDPeriod, SlowMACDPeriod, BollingerPeriod, BollingerDeviation, Sensitive, DeathZone, ExplosionPower, TrendPower);
+   ExitHandle                  = iCustom(SymbolInfo.Name(), PERIOD_D1, "jurik_filter", JurikPeriod, JurikPhase);
+   ATRHandle                   = iCustom(SymbolInfo.Name(), PERIOD_D1, "Examples/ATR", ATRPeriod);
+   SpreadHandle                = iCustom(SymbolInfo.Name(), PERIOD_D1, "Spread_Record");
 }
 
 //--- Setters --- OnInit Functions
@@ -195,17 +195,34 @@ void IndicatorProcessor::UpdateAllIndicators(void) {
 }
 
 //--- Getters --- Baseline Indicator
-bool   IndicatorProcessor::IsAboveBaseline(const int InputShift)  const { return GetBidPrice(InputShift) > GetBaselineValue(InputShift) && GetAskPrice(InputShift) > GetBaselineValue(InputShift); }
-bool   IndicatorProcessor::IsBelowBaseline(const int InputShift)  const { return GetBidPrice(InputShift) < GetBaselineValue(InputShift) && GetAskPrice(InputShift) < GetBaselineValue(InputShift); }
-double IndicatorProcessor::GetBaselineValue(const int InputShift) const { return NormalizeDouble(SuperSmootherValueBuffer[InputShift], SymbolInfo.Digits());                                       }
+bool IndicatorProcessor::HasCandleCrossedBaseline(const int InputShift) const {
+   return HasCandleCrossedBaselineFromAbove(InputShift) || HasCandleCrossedBaselineFromBelow(InputShift);
+}
+
+//--- Getters --- Baseline Indicator
+bool IndicatorProcessor::HasCandleCrossedBaselineFromAbove(const int InputShift) const {
+   return GetBaselineValue(InputShift) <= iOpen(SymbolInfo.Name(), PERIOD_D1, InputShift) &&
+          GetBaselineValue(InputShift) >  GetBidPrice(InputShift)                         ;
+}
+
+//--- Getters --- Baseline Indicator
+bool IndicatorProcessor::HasCandleCrossedBaselineFromBelow(const int InputShift) const {
+   return GetBaselineValue(InputShift) >= iOpen(SymbolInfo.Name(), PERIOD_D1, InputShift) &&
+          GetBaselineValue(InputShift) <  GetAskPrice(InputShift)                         ;
+}
+
+//--- Getters --- Baseline Indicator
+bool   IndicatorProcessor::IsAboveBaseline(const int InputShift)  const { return GetAskPrice(InputShift) > GetBaselineValue(InputShift);                     }
+bool   IndicatorProcessor::IsBelowBaseline(const int InputShift)  const { return GetBidPrice(InputShift) < GetBaselineValue(InputShift);                     }
+double IndicatorProcessor::GetBaselineValue(const int InputShift) const { return NormalizeDouble(SuperSmootherValueBuffer[InputShift], SymbolInfo.Digits()); }
 
 //--- Getters --- Primary Confirmation Indicator
 double IndicatorProcessor::GetPrimaryConfirmationBullishValue(const int InputShift) const { return IsPrimaryConfirmationBullish(InputShift) ? GetPrimaryConfirmationValue(InputShift) : 0; }
 double IndicatorProcessor::GetPrimaryConfirmationBearishValue(const int InputShift) const { return IsPrimaryConfirmationBearish(InputShift) ? GetPrimaryConfirmationValue(InputShift) : 0; }
-double IndicatorProcessor::GetPrimaryConfirmationValue(const int InputShift)        const { return NormalizeDouble(EhlerFisherValueBuffer[InputShift], SymbolInfo.Digits());                    }
-double IndicatorProcessor::GetPrimaryConfirmationDirection(const int InputShift)    const { return EhlerFisherDirectionBuffer[InputShift];                                                      }
-bool   IndicatorProcessor::IsPrimaryConfirmationBullish(const int InputShift)       const { return GetPrimaryConfirmationDirection(InputShift) == EHLER_FISHER_BULLISH_DIRECTION;                }
-bool   IndicatorProcessor::IsPrimaryConfirmationBearish(const int InputShift)       const { return GetPrimaryConfirmationDirection(InputShift) == EHLER_FISHER_BEARISH_DIRECTION;                }
+double IndicatorProcessor::GetPrimaryConfirmationValue(const int InputShift)        const { return NormalizeDouble(EhlerFisherValueBuffer[InputShift], SymbolInfo.Digits());               }
+double IndicatorProcessor::GetPrimaryConfirmationDirection(const int InputShift)    const { return EhlerFisherDirectionBuffer[InputShift];                                                 }
+bool   IndicatorProcessor::IsPrimaryConfirmationBullish(const int InputShift)       const { return GetPrimaryConfirmationDirection(InputShift) == EHLER_FISHER_BULLISH_DIRECTION;          }
+bool   IndicatorProcessor::IsPrimaryConfirmationBearish(const int InputShift)       const { return GetPrimaryConfirmationDirection(InputShift) == EHLER_FISHER_BEARISH_DIRECTION;          }
 
 //--- Getters --- Secondary Confirmation Indicator
 bool   IndicatorProcessor::IsSecondaryConfirmationBullish(const int InputShift)       const { return GetSecondaryConfirmationBullishValue(InputShift) > GetSecondaryConfirmationBearishValue(InputShift); }
@@ -221,8 +238,8 @@ double IndicatorProcessor::GetWAESignalValue(const int InputShift) const { retur
 double IndicatorProcessor::GetWAEDeathZone(const int InputShift)   const { return NormalizeDouble(WAEDeathZoneBuffer[InputShift]  , SymbolInfo.Digits());                                                   }
 
 //--- Getters --- Exit Indicator
-bool   IndicatorProcessor::ShouldExitLong(const int InputShift)      const { return IsExitBearish(InputShift);                                                    }
-bool   IndicatorProcessor::ShouldExitShort(const int InputShift)     const { return IsExitBullish(InputShift);                                                    }
+bool   IndicatorProcessor::ShouldExitLongFromExitIndicator(const int InputShift)      const { return IsExitBearish(InputShift);                                                    }
+bool   IndicatorProcessor::ShouldExitShortFromExitIndicator(const int InputShift)     const { return IsExitBullish(InputShift);                                                    }
 double IndicatorProcessor::GetExitBullishValue(const int InputShift) const { return IsExitBullish(InputShift) ? GetExitValue(InputShift) : 0;                     }
 double IndicatorProcessor::GetExitBearishValue(const int InputShift) const { return IsExitBearish(InputShift) ? GetExitValue(InputShift) : 0;                     }
 double IndicatorProcessor::GetExitValue(const int InputShift)        const { return NormalizeDouble(JurikFilterValueBuffer[InputShift], SymbolInfo.Digits());     }
@@ -233,6 +250,42 @@ bool   IndicatorProcessor::IsExitBearish(const int InputShift)       const { ret
 //--- Getters --- ATR Indicator
 double IndicatorProcessor::GetATRValue(const int InputShift) const { return NormalizeDouble(ATRValueBuffer[InputShift], SymbolInfo.Digits()); }
 
+//--- Getters --- ATR Indicator
+bool IndicatorProcessor::IsWithInOneXATRValue(const int InputShift)  const {
+   if (IsAboveBaseline(InputShift)) {
+      return GetAskPrice(InputShift) <= GetOneXATRUpperBand(InputShift);
+   }
+   if (IsBelowBaseline(InputShift)) {
+      return GetBidPrice(InputShift) >= GetOneXATRLowerBand(InputShift);
+   }
+   return false;
+}
+
+//--- Getters --- ATR Indicator
+bool IndicatorProcessor::IsOutsideOneXATRValue(const int InputShift) const {
+   if (IsAboveBaseline(InputShift)) {
+      return GetAskPrice(InputShift) > GetOneXATRUpperBand(InputShift);
+   }
+   if (IsBelowBaseline(InputShift)) {
+      return GetBidPrice(InputShift) < GetOneXATRLowerBand(InputShift);
+   }
+   return false;
+}
+
+//--- Getters --- ATR Indicator
+double IndicatorProcessor::GetOneXATRValueInPrice(const int InputShift)          const { return NormalizeDouble(IP.GetATRValue(InputShift) * 1.0, SymbolInfo.Digits()); }
+double IndicatorProcessor::GetOnePointFiveXATRValueInPrice(const int InputShift) const { return NormalizeDouble(IP.GetATRValue(InputShift) * 1.5, SymbolInfo.Digits()); }
+double IndicatorProcessor::GetTwoXATRValueInPrice(const int InputShift)          const { return NormalizeDouble(IP.GetATRValue(InputShift) * 2.0, SymbolInfo.Digits()); }
+
+//--- Getters --- ATR Indicator
+int IndicatorProcessor::GetOneXATRValueInPoint(const int InputShift)          const { return GF.PriceToPointCvt(GetOneXATRValueInPrice(InputShift));          }
+int IndicatorProcessor::GetOnePointFiveXATRValueInPoint(const int InputShift) const { return GF.PriceToPointCvt(GetOnePointFiveXATRValueInPrice(InputShift)); }
+int IndicatorProcessor::GetTwoXATRValueInPoint(const int InputShift)          const { return GF.PriceToPointCvt(GetTwoXATRValueInPrice(InputShift));          }
+
+//--- Helper Functions: Get 1X ATR Band
+double IndicatorProcessor::GetOneXATRUpperBand(const int InputShift) const { return GetBaselineValue(InputShift) + GetOneXATRValueInPrice(InputShift); }
+double IndicatorProcessor::GetOneXATRLowerBand(const int InputShift) const { return GetBaselineValue(InputShift) - GetOneXATRValueInPrice(InputShift); }
+
 //--- Getters --- Spread Indicator
 int IndicatorProcessor::GetOpenSpreadInPts(const int InputShift)    const { return (int) (OpenSpreadBuffer[InputShift]);            }
 int IndicatorProcessor::GetHighSpreadInPts(const int InputShift)    const { return (int) (HighSpreadBuffer[InputShift]);            }
@@ -240,6 +293,7 @@ int IndicatorProcessor::GetLowSpreadInPts(const int InputShift)     const { retu
 int IndicatorProcessor::GetCloseSpreadInPts(const int InputShift)   const { return (int) (CloseSpreadBuffer[InputShift]);           }
 int IndicatorProcessor::GetAverageSpreadInPts(const int InputShift) const { return (int) MathCeil(AverageSpreadBuffer[InputShift]); }
 
+//--- Getters --- Spread Indicator
 double IndicatorProcessor::GetOpenSpreadInPrice(const int InputShift)    const { return GF.PointToPriceCvt(GetOpenSpreadInPts(InputShift));    }
 double IndicatorProcessor::GetHighSpreadInPrice(const int InputShift)    const { return GF.PointToPriceCvt(GetHighSpreadInPts(InputShift));    }
 double IndicatorProcessor::GetLowSpreadInPrice(const int InputShift)     const { return GF.PointToPriceCvt(GetLowSpreadInPts(InputShift));     }
@@ -251,11 +305,13 @@ double IndicatorProcessor::GetBidPrice(const int InputShift) const {
    if (InputShift == CURRENT_BAR) {
       return SymbolInfo.Bid();
    }
-   return iClose(SymbolInfo.Name(), Period(), InputShift);
+   return iClose(SymbolInfo.Name(), PERIOD_D1, InputShift);
 }
+
+//--- Helper Functions: Get Approximate Past Tick Value
 double IndicatorProcessor::GetAskPrice(const int InputShift) const {
    if (InputShift == CURRENT_BAR) {
       return SymbolInfo.Ask();
    }
-   return NormalizeDouble(iClose(SymbolInfo.Name(), Period(), InputShift) + GetAverageSpreadInPrice(InputShift), SymbolInfo.Digits());
+   return NormalizeDouble(iClose(SymbolInfo.Name(), PERIOD_D1, InputShift) + GetAverageSpreadInPrice(InputShift), SymbolInfo.Digits());
 }

@@ -76,7 +76,7 @@ void MqlTradeRequestWrapper::Unwrap(MqlTradeRequest &OutputRequest) const {
 
 //--- Update --- NOT OnTick Function
 void MqlTradeRequestWrapper::UpdateCreateDateTime(void) {
-   CreateDateTime = TimeGMT();
+   CreateDateTime = TimeTradeServer();
 }
 
 //--- Required ADT Functions

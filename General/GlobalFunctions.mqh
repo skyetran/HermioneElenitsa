@@ -10,7 +10,7 @@ public:
    static GlobalFunctions *GetInstance(void);
    
    //--- Debug Functions
-   string GetDebugMsg(void);
+   string GetDebugMsg(void) const ;
    
    //--- OnTick Functions
    void Update(void);

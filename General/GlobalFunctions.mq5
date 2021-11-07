@@ -16,7 +16,7 @@ GlobalFunctions *GlobalFunctions::GetInstance(void) {
 }
 
 //--- Debug Functions
-string GlobalFunctions::GetDebugMsg(void) {
+string GlobalFunctions::GetDebugMsg(void) const {
    string Msg = "";
    
    return Msg;
@@ -29,7 +29,7 @@ void GlobalFunctions::Update(void) {
 }
 
 //--- Conversion
-int    GlobalFunctions::PriceToPointCvt(const double &InputPrice) const { return (int) (InputPrice / SymbolInfo.Point());    }
-int    GlobalFunctions::PriceToPointCvt(const double  InputPrice) const { return (int) (InputPrice / SymbolInfo.Point());    }
+int    GlobalFunctions::PriceToPointCvt(const double &InputPrice) const { return (int)    (InputPrice / SymbolInfo.Point()); }
+int    GlobalFunctions::PriceToPointCvt(const double  InputPrice) const { return (int)    (InputPrice / SymbolInfo.Point()); }
 double GlobalFunctions::PointToPriceCvt(const int &InputPoint)    const { return (double) (InputPoint * SymbolInfo.Point()); }
 double GlobalFunctions::PointToPriceCvt(const int  InputPoint)    const { return (double) (InputPoint * SymbolInfo.Point()); }

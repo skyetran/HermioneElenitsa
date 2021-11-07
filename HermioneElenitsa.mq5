@@ -6,6 +6,7 @@
 
 #include "General/GlobalFunctions.mqh"
 #include "General/IndicatorProcessor.mqh"
+#include "Signal/SignalGenerator.mqh"
 
 extern string              Text1                            = "All Indicators Settings";
 extern string              Text2                            = "Baseline Indicator Settings";
@@ -37,6 +38,7 @@ input  int                 ATRPeriod                        = 14;
 //--- Global Variables
 GlobalFunctions    *GF = GlobalFunctions::GetInstance();
 IndicatorProcessor *IP = IndicatorProcessor::GetInstance();
+SignalGenerator    *SG = SignalGenerator::GetInstance();
 
 int OnInit() {
    if (!InitIndicators()) {
@@ -62,8 +64,9 @@ bool InitIndicators(void) {
 void OnTick() {
    Update();
    string DebugMsg;
-   DebugMsg += IP.GetDebugMsg() + "\n";
-   
+   //DebugMsg += GF.GetDebugMsg() + "\n";
+   //DebugMsg += IP.GetDebugMsg() + "\n";
+   DebugMsg += SG.GetDebugMsg() + "\n";
    Comment(DebugMsg);
 }
 
@@ -71,4 +74,5 @@ void OnTick() {
 void Update(void) {
    GF.Update();
    IP.Update();
+   SG.Update();
 }

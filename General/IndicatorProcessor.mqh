@@ -43,9 +43,9 @@
 #define MAX_PHASE                         359
 
 //--- Buffer Boundary
-#define INDICATOR_BUFFER_SIZE             3
+#define INDICATOR_BUFFER_SIZE             8
 
-//--- Schaff Trend Cycle Constants
+//--- Ehler Fisher Constants
 #define EHLER_FISHER_BULLISH_DIRECTION    1
 #define EHLER_FISHER_BEARISH_DIRECTION    2
 
@@ -60,7 +60,7 @@ public:
    static IndicatorProcessor *GetInstance(void);
    
    //--- Debug Functions
-   string GetDebugMsg(void);
+   string GetDebugMsg(void) const;
    
    //--- OnInit Functions
    void Init(void);
@@ -80,9 +80,12 @@ public:
    void Update(void);
    
    //--- Getters --- Baseline Indicator
-   double GetBaselineValue(const int InputShift) const;
-   bool   IsAboveBaseline(const int InputShift) const;
-   bool   IsBelowBaseline(const int InputShift) const;
+   bool   HasCandleCrossedBaseline(const int InputShift)          const;
+   bool   HasCandleCrossedBaselineFromAbove(const int InputShift) const;
+   bool   HasCandleCrossedBaselineFromBelow(const int InputShift) const;
+   double GetBaselineValue(const int InputShift)                  const;
+   bool   IsAboveBaseline(const int InputShift)                   const;
+   bool   IsBelowBaseline(const int InputShift)                   const;
    
    //--- Getters --- Primary Confirmation Indicator
    double GetPrimaryConfirmationBullishValue(const int InputShift) const;
@@ -106,17 +109,28 @@ public:
    double GetWAEDeathZone(const int InputShift)   const;
    
    //--- Getters --- Exit Indicator
-   bool   ShouldExitLong(const int InputShift)      const;
-   bool   ShouldExitShort(const int InputShift)     const;
-   double GetExitBullishValue(const int InputShift) const;
-   double GetExitBearishValue(const int InputShift) const;
-   double GetExitValue(const int InputShift)        const;
-   double GetExitDirection(const int InputShift)    const;
-   bool   IsExitBullish(const int InputShift)       const;
-   bool   IsExitBearish(const int InputShift)       const;
+   bool   ShouldExitLongFromExitIndicator(const int InputShift)  const;
+   bool   ShouldExitShortFromExitIndicator(const int InputShift) const;
+   double GetExitBullishValue(const int InputShift)              const;
+   double GetExitBearishValue(const int InputShift)              const;
+   double GetExitValue(const int InputShift)                     const;
+   double GetExitDirection(const int InputShift)                 const;
+   bool   IsExitBullish(const int InputShift)                    const;
+   bool   IsExitBearish(const int InputShift)                    const;
    
    //--- Getters --- ATR Indicator
    double GetATRValue(const int InputShift) const;
+   
+   bool IsWithInOneXATRValue(const int InputShift)  const;
+   bool IsOutsideOneXATRValue(const int InputShift) const;
+   
+   double GetOneXATRValueInPrice(const int InputShift)          const;
+   double GetOnePointFiveXATRValueInPrice(const int InputShift) const;
+   double GetTwoXATRValueInPrice(const int InputShift)          const;
+   
+   int GetOneXATRValueInPoint(const int InputShift)          const;
+   int GetOnePointFiveXATRValueInPoint(const int InputShift) const;
+   int GetTwoXATRValueInPoint(const int InputShift)          const;
    
    //--- Getters --- Spread Indicator
    int GetOpenSpreadInPts(const int InputShift)    const;
@@ -207,7 +221,7 @@ private:
    bool IsFastSlowPeriodValid(const int &InputFastPeriod, const int &InputSlowPeriod) const;
    bool IsParameterGreaterThanZero(const int &InputAnyParameter)                      const;
    bool IsParameterGreaterThanZero(const double &InputAnyParameter)                   const;
-   bool IsPhaseValid(const int &InputPhase)                                         const;
+   bool IsPhaseValid(const int &InputPhase)                                           const;
    
    //--- OnTick Functions
    void UpdateAllIndicators(void);
@@ -215,6 +229,10 @@ private:
    //--- Helper Functions: Get Approximate Past Tick Value
    double GetBidPrice(const int InputShift) const;
    double GetAskPrice(const int InputShift) const;
+   
+   //--- Helper Functions: Get 1X ATR Band
+   double GetOneXATRUpperBand(const int InputShift) const;
+   double GetOneXATRLowerBand(const int InputShift) const;
 };
 
 IndicatorProcessor *IndicatorProcessor::Instance = NULL;
