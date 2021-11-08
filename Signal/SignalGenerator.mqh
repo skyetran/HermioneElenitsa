@@ -24,7 +24,8 @@ public:
    
    //--- Getters --- OnTick Functions
    MqlTradeRequestWrapper *GetNextSignal(void);
-   
+   bool                    GetExitLongSignal(void);
+   bool                    GetExitShortSignal(void);
    
 private:
    //--- Trade Class Instances
@@ -37,14 +38,23 @@ private:
    //--- Tracking DateTime Variables
    datetime CurrentDateTime;
    datetime TailingDateTime;
+   datetime LastDateTime;
    datetime LastLastDateTime;
    datetime StartDateTime;   
+   
+   //--- Tracking Time Flag Variables
+   bool NewCandleFlag;
    
    //--- Tracking Flag Variables
    bool LongEntrySignalFlag;
    bool ShortEntrySignalFlag;
-   bool NewCandleFlag;
+   
+   bool ResetTrackingVariablesFlag;
+   bool LongOrderExitFlag;
+   bool ShortOrderExitFlag;
    bool FirstClosedCandleFlag;
+   bool FirstClosedLongCandleFlag;
+   bool FirstClosedShortCandleFlag;
    bool SecondClosedCandleFlag;
    bool BridgeTooFarFlag;
    bool LookingForBaselineEntryFlag;
@@ -56,8 +66,9 @@ private:
    bool LookingForContinuationEntryFlag;
    bool ContinuationEntryFlag;
    bool FirstEntrySignalFlag;
-   bool LongOrderExitFlag;
-   bool ShortOrderExitFlag;
+   bool FirstLongEntrySignalFlag;
+   bool FirstShortEntrySignalFlag;
+   bool HasTradedThisCandleFlag;
    
    //--- Singleton Instance
    static SignalGenerator *Instance;
@@ -69,9 +80,15 @@ private:
    void InitTrackingVariables(void);
    
    //--- Helper Functions: Update --- OnTick Functions
+   void ResetTrackingVariables(void);
    void UpdateNewCandleFlag(void);
+   void ResetHasTradedThisCandleFlag(void);
    void UpdateDateTimeVariables(void);
+   void UpdateLongOrderExitFlag(void);
+   void UpdateShortOrderExitFlag(void);
    void UpdateFirstClosedCandleFlag(void);
+   void UpdateFirstClosedLongCandleFlag(void);
+   void UpdateFirstClosedShortCandleFlag(void);
    void UpdateSecondClosedCandleFlag(void);
    void UpdateBridgeTooFarFlag(void);
    void UpdateLookingForBaselineEntryFlag(void);
@@ -83,14 +100,17 @@ private:
    void UpdateLookingForContinuationEntryFlag(void);
    void UpdateContinuationEntryFlag(void);
    void UpdateFirstEntrySignalFlag(void);
-   void UpdateLongOrderExitFlag(void);
-   void UpdateShortOrderExitFlag(void);
-   void ResetTrackingVariables(void);
+   void UpdateFirstLongEntrySignalFlag(void);
+   void UpdateFirstShortEntrySignalFlag(void);
+   void UpdateHasTradedThisCandleFlag(void);
+   
+   //--- Helper Functions: GetNextSignal
    void ResetEntrySignalTrackingVariables(void);
    
    //--- Helper Functions: UpdateDateTimeVariables --- OnTickFunctions
    void UpdateCurrentDateTime(void);
    void UpdateTailingDateTime(void);
+   void UpdateLastDateTime(void);
    void UpdateLastLastDateTime(void);
    void UpdateStartDateTime(void);
    
@@ -121,6 +141,10 @@ private:
    bool IndicatorsGiveContinuationShortSignal(const int InputShift) const;
    bool IndicatorsGiveExitLongSignal(const int InputShift)          const;
    bool IndicatorsGiveExitShortSignal(const int InputShift)         const;
+   
+   //--- Helper Functions: GetNextSignal --- OnTick Functions
+   MqlTradeRequestWrapper *GetNextLongSignal(void) const;
+   MqlTradeRequestWrapper *GetNextShortSignal(void) const;   
 };
 
 SignalGenerator *SignalGenerator::Instance = NULL;

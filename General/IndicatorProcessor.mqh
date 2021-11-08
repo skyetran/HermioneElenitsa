@@ -119,18 +119,26 @@ public:
    bool   IsExitBearish(const int InputShift)                    const;
    
    //--- Getters --- ATR Indicator
-   double GetATRValue(const int InputShift) const;
+   double GetATRValue(const int InputShift)  const;
+   double GetXATRValue(const int InputShift, const double InputMultiplier) const;
    
    bool IsWithInOneXATRValue(const int InputShift)  const;
    bool IsOutsideOneXATRValue(const int InputShift) const;
    
-   double GetOneXATRValueInPrice(const int InputShift)          const;
-   double GetOnePointFiveXATRValueInPrice(const int InputShift) const;
-   double GetTwoXATRValueInPrice(const int InputShift)          const;
+   bool IsWithInXATRValue(const int InputShift, const double InputMultiplier)  const;
+   bool IsOutsideXATRValue(const int InputShift, const double InputMultiplier) const;
    
-   int GetOneXATRValueInPoint(const int InputShift)          const;
-   int GetOnePointFiveXATRValueInPoint(const int InputShift) const;
-   int GetTwoXATRValueInPoint(const int InputShift)          const;
+   double GetZeroPointFiveXATRValueInPrice(const int InputShift)                  const;
+   double GetOneXATRValueInPrice(const int InputShift)                            const;
+   double GetOnePointFiveXATRValueInPrice(const int InputShift)                   const;
+   double GetTwoXATRValueInPrice(const int InputShift)                            const;
+   double GetXATRValueInPrice(const int InputShift, const double InputMultiplier) const;
+   
+   int GetZeroPointFiveXATRValueInPoint(const int InputShift)                  const;
+   int GetOneXATRValueInPoint(const int InputShift)                            const;
+   int GetOnePointFiveXATRValueInPoint(const int InputShift)                   const;
+   int GetTwoXATRValueInPoint(const int InputShift)                            const;
+   int GetXATRValueInPoint(const int InputShift, const double InputMultiplier) const;
    
    //--- Getters --- Spread Indicator
    int GetOpenSpreadInPts(const int InputShift)    const;
@@ -144,6 +152,10 @@ public:
    double GetLowSpreadInPrice(const int InputShift)     const;
    double GetCloseSpreadInPrice(const int InputShift)   const;
    double GetAverageSpreadInPrice(const int InputShift) const;
+   
+   //--- Getters --- Approximate Past Tick Value
+   double GetBidPrice(const int InputShift) const;
+   double GetAskPrice(const int InputShift) const;
    
 private:
    //--- Trade Class Instances
@@ -226,13 +238,21 @@ private:
    //--- OnTick Functions
    void UpdateAllIndicators(void);
    
-   //--- Helper Functions: Get Approximate Past Tick Value
-   double GetBidPrice(const int InputShift) const;
-   double GetAskPrice(const int InputShift) const;
+   //--- Helper Functions: HasCandleCrossedBaselineFromAbove
+   bool HasCandleCrossedBaselineFromAboveRegularCase(const int InputShift)  const;
+   bool HasCandleCrossedBaselineFromAbovePriceGapCase(const int InputShift) const;
+   
+   //--- Helper Functions: HasCandleCrossedBaselineFromBelow
+   bool HasCandleCrossedBaselineFromBelowRegularCase(const int InputShift)  const;
+   bool HasCandleCrossedBaselineFromBelowPriceGapCase(const int InputShift) const;
    
    //--- Helper Functions: Get 1X ATR Band
    double GetOneXATRUpperBand(const int InputShift) const;
    double GetOneXATRLowerBand(const int InputShift) const;
+   
+   //--- Helper Functions: Get X ATR Band
+   double GetXATRUpderBand(const int InputShift, const double InputMultiplier) const;
+   double GetXATRLowerBand(const int InputShift, const double InputMultiplier) const;
 };
 
 IndicatorProcessor *IndicatorProcessor::Instance = NULL;

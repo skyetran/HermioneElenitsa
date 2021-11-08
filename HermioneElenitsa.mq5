@@ -67,6 +67,11 @@ void OnTick() {
    //DebugMsg += GF.GetDebugMsg() + "\n";
    //DebugMsg += IP.GetDebugMsg() + "\n";
    DebugMsg += SG.GetDebugMsg() + "\n";
+   
+   SG.GetExitLongSignal();
+   SG.GetExitShortSignal();
+   SG.GetNextSignal();
+   
    Comment(DebugMsg);
 }
 

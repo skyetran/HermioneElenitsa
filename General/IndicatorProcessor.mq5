@@ -51,6 +51,7 @@ string IndicatorProcessor::GetDebugMsg(void) const {
    Msg += "ATR Value: "                         + DoubleToString(GetATRValue(CURRENT_BAR))                       + "\n";
    Msg += "Close Spread: "                      + IntegerToString(GetCloseSpreadInPts(CURRENT_BAR))              + "\n";
    Msg += "Average Spread: "                    + IntegerToString(GetAverageSpreadInPts(CURRENT_BAR))            + "\n";
+   Msg += "Average Spread In Price: "           + DoubleToString(GetAverageSpreadInPrice(CURRENT_BAR))           + "\n";
    return Msg;
 }
 
@@ -201,14 +202,36 @@ bool IndicatorProcessor::HasCandleCrossedBaseline(const int InputShift) const {
 
 //--- Getters --- Baseline Indicator
 bool IndicatorProcessor::HasCandleCrossedBaselineFromAbove(const int InputShift) const {
-   return GetBaselineValue(InputShift) <= iOpen(SymbolInfo.Name(), PERIOD_D1, InputShift) &&
-          GetBaselineValue(InputShift) >  GetBidPrice(InputShift)                         ;
+   return HasCandleCrossedBaselineFromAboveRegularCase(InputShift) || HasCandleCrossedBaselineFromAbovePriceGapCase(InputShift);
+}
+
+//--- Helper Functions: HasCandleCrossedBaselineFromAbove
+bool IndicatorProcessor::HasCandleCrossedBaselineFromAboveRegularCase(const int InputShift) const {
+   return GetBaselineValue(InputShift) <= iOpen( SymbolInfo.Name(), PERIOD_D1, InputShift) &&
+          GetBaselineValue(InputShift) >= GetBidPrice(InputShift)                          ;
+}
+
+//--- Helper Functions: HasCandleCrossedBaselineFromAbove
+bool IndicatorProcessor::HasCandleCrossedBaselineFromAbovePriceGapCase(const int InputShift) const {
+   return GetBaselineValue(InputShift + 1) <= iClose(SymbolInfo.Name(), PERIOD_D1, InputShift + 1) &&
+          GetBaselineValue(InputShift)     >  iOpen( SymbolInfo.Name(), PERIOD_D1, InputShift)     ;
 }
 
 //--- Getters --- Baseline Indicator
 bool IndicatorProcessor::HasCandleCrossedBaselineFromBelow(const int InputShift) const {
+   return HasCandleCrossedBaselineFromBelowRegularCase(InputShift) || HasCandleCrossedBaselineFromBelowPriceGapCase(InputShift);
+}
+
+//--- Helper Functions: HasCandleCrossedBaselineFromBelow
+bool IndicatorProcessor::HasCandleCrossedBaselineFromBelowRegularCase(const int InputShift) const {
    return GetBaselineValue(InputShift) >= iOpen(SymbolInfo.Name(), PERIOD_D1, InputShift) &&
-          GetBaselineValue(InputShift) <  GetAskPrice(InputShift)                         ;
+          GetBaselineValue(InputShift) <= GetAskPrice(InputShift)                         ;
+}
+
+//--- Helper Functions: HasCandleCrossedBaselineFromBelow
+bool IndicatorProcessor::HasCandleCrossedBaselineFromBelowPriceGapCase(const int InputShift) const {
+   return GetBaselineValue(InputShift + 1) >= iClose(SymbolInfo.Name(), PERIOD_D1, InputShift + 1) &&
+          GetBaselineValue(InputShift)     <  iOpen( SymbolInfo.Name(), PERIOD_D1, InputShift)     ;
 }
 
 //--- Getters --- Baseline Indicator
@@ -248,43 +271,56 @@ bool   IndicatorProcessor::IsExitBullish(const int InputShift)       const { ret
 bool   IndicatorProcessor::IsExitBearish(const int InputShift)       const { return GetExitDirection(InputShift) == JURIK_BEARISH_DIRECTION;                      }
 
 //--- Getters --- ATR Indicator
-double IndicatorProcessor::GetATRValue(const int InputShift) const { return NormalizeDouble(ATRValueBuffer[InputShift], SymbolInfo.Digits()); }
+double IndicatorProcessor::GetATRValue(const int InputShift)                                const { return NormalizeDouble(ATRValueBuffer[InputShift]                  , SymbolInfo.Digits()); }
+double IndicatorProcessor::GetXATRValue(const int InputShift, const double InputMultiplier) const { return NormalizeDouble(ATRValueBuffer[InputShift] * InputMultiplier, SymbolInfo.Digits()); }
 
 //--- Getters --- ATR Indicator
-bool IndicatorProcessor::IsWithInOneXATRValue(const int InputShift)  const {
+bool IndicatorProcessor::IsWithInOneXATRValue(const int InputShift)  const { return IsWithInXATRValue(InputShift, 1.0);  }
+bool IndicatorProcessor::IsOutsideOneXATRValue(const int InputShift) const { return IsOutsideXATRValue(InputShift, 1.0); }
+
+//--- Getters --- ATR Indicator
+bool IndicatorProcessor::IsWithInXATRValue(const int InputShift, const double InputMultiplier) const {
    if (IsAboveBaseline(InputShift)) {
-      return GetAskPrice(InputShift) <= GetOneXATRUpperBand(InputShift);
+      return GetAskPrice(InputShift) <= GetXATRUpderBand(InputShift, InputMultiplier);
    }
    if (IsBelowBaseline(InputShift)) {
-      return GetBidPrice(InputShift) >= GetOneXATRLowerBand(InputShift);
+      return GetBidPrice(InputShift) >= GetXATRLowerBand(InputShift, InputMultiplier);
    }
    return false;
 }
 
 //--- Getters --- ATR Indicator
-bool IndicatorProcessor::IsOutsideOneXATRValue(const int InputShift) const {
+bool IndicatorProcessor::IsOutsideXATRValue(const int InputShift, const double InputMultiplier) const {
    if (IsAboveBaseline(InputShift)) {
-      return GetAskPrice(InputShift) > GetOneXATRUpperBand(InputShift);
+      return GetAskPrice(InputShift) > GetXATRUpderBand(InputShift, InputMultiplier);
    }
    if (IsBelowBaseline(InputShift)) {
-      return GetBidPrice(InputShift) < GetOneXATRLowerBand(InputShift);
+      return GetBidPrice(InputShift) < GetXATRLowerBand(InputShift, InputMultiplier);
    }
    return false;
 }
 
 //--- Getters --- ATR Indicator
-double IndicatorProcessor::GetOneXATRValueInPrice(const int InputShift)          const { return NormalizeDouble(IP.GetATRValue(InputShift) * 1.0, SymbolInfo.Digits()); }
-double IndicatorProcessor::GetOnePointFiveXATRValueInPrice(const int InputShift) const { return NormalizeDouble(IP.GetATRValue(InputShift) * 1.5, SymbolInfo.Digits()); }
-double IndicatorProcessor::GetTwoXATRValueInPrice(const int InputShift)          const { return NormalizeDouble(IP.GetATRValue(InputShift) * 2.0, SymbolInfo.Digits()); }
+double IndicatorProcessor::GetZeroPointFiveXATRValueInPrice(const int InputShift)                  const { return GetXATRValueInPrice(InputShift, 0.5);                                            }
+double IndicatorProcessor::GetOneXATRValueInPrice(const int InputShift)                            const { return GetXATRValueInPrice(InputShift, 1.0);                                            }
+double IndicatorProcessor::GetOnePointFiveXATRValueInPrice(const int InputShift)                   const { return GetXATRValueInPrice(InputShift, 1.5);                                            }
+double IndicatorProcessor::GetTwoXATRValueInPrice(const int InputShift)                            const { return GetXATRValueInPrice(InputShift, 2.0);                                            }
+double IndicatorProcessor::GetXATRValueInPrice(const int InputShift, const double InputMultiplier) const { return NormalizeDouble(GetXATRValue(InputShift, InputMultiplier), SymbolInfo.Digits()); }
 
 //--- Getters --- ATR Indicator
-int IndicatorProcessor::GetOneXATRValueInPoint(const int InputShift)          const { return GF.PriceToPointCvt(GetOneXATRValueInPrice(InputShift));          }
-int IndicatorProcessor::GetOnePointFiveXATRValueInPoint(const int InputShift) const { return GF.PriceToPointCvt(GetOnePointFiveXATRValueInPrice(InputShift)); }
-int IndicatorProcessor::GetTwoXATRValueInPoint(const int InputShift)          const { return GF.PriceToPointCvt(GetTwoXATRValueInPrice(InputShift));          }
+int IndicatorProcessor::GetZeroPointFiveXATRValueInPoint(const int InputShift)                  const { return GetXATRValueInPoint(InputShift, 0.5);                                 }
+int IndicatorProcessor::GetOneXATRValueInPoint(const int InputShift)                            const { return GetXATRValueInPoint(InputShift, 1.0);                                 }
+int IndicatorProcessor::GetOnePointFiveXATRValueInPoint(const int InputShift)                   const { return GetXATRValueInPoint(InputShift, 1.5);                                 }
+int IndicatorProcessor::GetTwoXATRValueInPoint(const int InputShift)                            const { return GetXATRValueInPoint(InputShift, 2.0);                                 }
+int IndicatorProcessor::GetXATRValueInPoint(const int InputShift, const double InputMultiplier) const { return GF.PriceToPointCvt(GetXATRValueInPrice(InputShift, InputMultiplier)); }
 
 //--- Helper Functions: Get 1X ATR Band
-double IndicatorProcessor::GetOneXATRUpperBand(const int InputShift) const { return GetBaselineValue(InputShift) + GetOneXATRValueInPrice(InputShift); }
-double IndicatorProcessor::GetOneXATRLowerBand(const int InputShift) const { return GetBaselineValue(InputShift) - GetOneXATRValueInPrice(InputShift); }
+double IndicatorProcessor::GetOneXATRUpperBand(const int InputShift) const { return GetXATRUpderBand(InputShift, 1.0); }
+double IndicatorProcessor::GetOneXATRLowerBand(const int InputShift) const { return GetXATRLowerBand(InputShift, 1.0); }
+
+//--- Helper Functions: Get X ATR Band
+double IndicatorProcessor::GetXATRUpderBand(const int InputShift, const double InputMultiplier) const { return GetBaselineValue(InputShift) + GetXATRValue(InputShift, InputMultiplier); }
+double IndicatorProcessor::GetXATRLowerBand(const int InputShift, const double InputMultiplier) const { return GetBaselineValue(InputShift) - GetXATRValue(InputShift, InputMultiplier); }
 
 //--- Getters --- Spread Indicator
 int IndicatorProcessor::GetOpenSpreadInPts(const int InputShift)    const { return (int) (OpenSpreadBuffer[InputShift]);            }
@@ -300,7 +336,7 @@ double IndicatorProcessor::GetLowSpreadInPrice(const int InputShift)     const {
 double IndicatorProcessor::GetCloseSpreadInPrice(const int InputShift)   const { return GF.PointToPriceCvt(GetCloseSpreadInPts(InputShift));   }
 double IndicatorProcessor::GetAverageSpreadInPrice(const int InputShift) const { return GF.PointToPriceCvt(GetAverageSpreadInPts(InputShift)); }
 
-//--- Helper Functions: Get Approximate Past Tick Value
+//--- Getters --- Approximate Past Tick Value
 double IndicatorProcessor::GetBidPrice(const int InputShift) const {
    if (InputShift == CURRENT_BAR) {
       return SymbolInfo.Bid();
@@ -308,7 +344,7 @@ double IndicatorProcessor::GetBidPrice(const int InputShift) const {
    return iClose(SymbolInfo.Name(), PERIOD_D1, InputShift);
 }
 
-//--- Helper Functions: Get Approximate Past Tick Value
+//--- Getters --- Approximate Past Tick Value
 double IndicatorProcessor::GetAskPrice(const int InputShift) const {
    if (InputShift == CURRENT_BAR) {
       return SymbolInfo.Ask();
