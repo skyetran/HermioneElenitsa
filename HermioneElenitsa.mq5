@@ -6,17 +6,22 @@
 
 #include "General/GlobalFunctions.mqh"
 #include "General/IndicatorProcessor.mqh"
+#include "Manager/TradeExecutor.mqh"
 #include "Signal/SignalGenerator.mqh"
+
+#define DEFAULT_ATR_MULTIPLIER   1
+#define DEFAULT_MAGIC_NUMBER     264897654
+#define DEFAULT_DEVIATION        5
 
 extern string              Text1                            = "All Indicators Settings";
 extern string              Text2                            = "Baseline Indicator Settings";
 input  int                 SuperSmootherPeriod              = 20;
 
 extern string              Text3                            = "Primary Indicator Settings";
-input  int                 EhlerFisherPeriod                = 32;
+input  int                 EhlerFisherPeriod                = 14;
 
 extern string              Text4                            = "Secondary Indicator Settings";
-input  int                 VortexPeriod                     = 5;
+input  int                 VortexPeriod                     = 10;
 
 extern string              Text5                            = "Volume Indicator Settings";
 input  int                 FastMACDPeriod                   = 20;
@@ -35,10 +40,18 @@ input  int                 JurikPhase                       = 180;
 extern string              Text7                            = "ATR Indicator Settings";
 input  int                 ATRPeriod                        = 14;
 
+extern string              Text8                            = "Flexible NNFX Trade Settings";
+input  double              ATRMultiplier                    = 1.0;
+
+extern string              Text9                            = "Expert Advisor Trade Settings";
+input  int                 MagicNumber                      = 196735465;
+input  int                 Deviation                        = 5;
+
 //--- Global Variables
 GlobalFunctions    *GF = GlobalFunctions::GetInstance();
 IndicatorProcessor *IP = IndicatorProcessor::GetInstance();
 SignalGenerator    *SG = SignalGenerator::GetInstance();
+TradeExecutor      *TE = TradeExecutor::GetInstance();
 
 int OnInit() {
    if (!InitIndicators()) {
@@ -70,9 +83,45 @@ void OnTick() {
    
    SG.GetExitLongSignal();
    SG.GetExitShortSignal();
-   SG.GetNextSignal();
+   MqlTradeRequestWrapper *Request = SG.GetNextSignal();
+   
+   static int i = 0;
+   if (Request) {
+      if (Request.tp > Request.sl) {
+         ObjectCreate(0, IntegerToString(i++), OBJ_ARROW_BUY, 0, TimeCurrent(), IP.GetAskPrice(CURRENT_BAR));
+      } else {
+         ObjectCreate(0, IntegerToString(i++), OBJ_ARROW_SELL, 0, TimeCurrent(), IP.GetBidPrice(CURRENT_BAR));
+      }
+   }
    
    Comment(DebugMsg);
+}
+
+//--- Run Only Once --- OnInit Is Too Early For Some Functions
+void PostInit(void) {
+   static bool OnlyOnceFlag = true;
+   if (OnlyOnceFlag) {
+      OnlyOnceFlag = false;
+      InitSignalGenerator();
+      InitTradeExecutor();
+   }
+}
+
+//--- Init Signal Generator's Parameters
+void InitSignalGenerator(void) {
+   if (!SG.SetATRMultiplier(ATRMultiplier)) {
+      SG.SetATRMultiplier(DEFAULT_ATR_MULTIPLIER);
+   }
+}
+
+//--- Init Trade Executor's Parameters
+void InitTradeExecutor(void) {
+   if (!TE.SetExpertAdvisorMagicNumber(MagicNumber) &&
+       !TE.SetDeviation(Deviation)) {
+      TE.SetExpertAdvisorMagicNumber(DEFAULT_MAGIC_NUMBER);
+      TE.SetDeviation(DEFAULT_DEVIATION);   
+   }
+   TE.Init();
 }
 
 //--- Assemble All OnTick Functions From All Entities
@@ -80,4 +129,5 @@ void Update(void) {
    GF.Update();
    IP.Update();
    SG.Update();
+   TE.Update();
 }

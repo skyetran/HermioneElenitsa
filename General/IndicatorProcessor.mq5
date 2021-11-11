@@ -14,6 +14,7 @@ IndicatorProcessor::IndicatorProcessor(void) {
    ArraySetAsSeries(VortexBullishValueBuffer  , true);
    ArraySetAsSeries(VortexBearishValueBuffer  , true);
    ArraySetAsSeries(WAEVolumeValueBuffer      , true);
+   ArraySetAsSeries(WAEVolumeDirectionBuffer  , true);
    ArraySetAsSeries(WAESignalValueBuffer      , true);
    ArraySetAsSeries(WAEDeathZoneBuffer        , true);
    ArraySetAsSeries(JurikFilterValueBuffer    , true);
@@ -37,16 +38,18 @@ IndicatorProcessor *IndicatorProcessor::GetInstance(void) {
 //--- Debug Functions
 string IndicatorProcessor::GetDebugMsg(void) const {
    string Msg = "";
+   Msg += "Within 1X ATR Value: "               + (IsWithInOneXATRValue(CURRENT_BAR)             ? "Yes" : "No") + "\n";
    Msg += "Baseline Value: "                    + DoubleToString(GetBaselineValue(CURRENT_BAR))                  + "\n";
-   Msg += "Is Above Baseline: "                 + (IsAboveBaseline(CURRENT_BAR) ? "Yes" : "No")                  + "\n";
-   Msg += "Is Below Baseline: "                 + (IsBelowBaseline(CURRENT_BAR) ? "Yes" : "No")                  + "\n";
-   Msg += "Is Primary Confirmation Bullish: "   + (IsPrimaryConfirmationBullish(CURRENT_BAR) ? "Yes" : "No")     + "\n";
-   Msg += "Is Primary Confirmation Bearish: "   + (IsPrimaryConfirmationBearish(CURRENT_BAR) ? "Yes" : "No")     + "\n";
-   Msg += "Is Secondary Confirmation Bullish: " + (IsSecondaryConfirmationBullish(CURRENT_BAR) ? "Yes" : "No")   + "\n";
-   Msg += "Is Secondary Confirmation Bearish: " + (IsSecondaryConfirmationBearish(CURRENT_BAR) ? "Yes" : "No")   + "\n";
-   Msg += "Is Dead Market: "                    + (IsDeadMarket(CURRENT_BAR) ? "Yes" : "No")                     + "\n";
-   Msg += "Is Active Market: "                  + (IsActiveMarket(CURRENT_BAR) ? "Yes" : "No")                   + "\n";
-   Msg += "Should Exit Long: "                  + (ShouldExitLongFromExitIndicator(CURRENT_BAR) ? "Yes" : "No")  + "\n";
+   Msg += "Is Above Baseline: "                 + (IsAboveBaseline(CURRENT_BAR)                  ? "Yes" : "No") + "\n";
+   Msg += "Is Below Baseline: "                 + (IsBelowBaseline(CURRENT_BAR)                  ? "Yes" : "No") + "\n";
+   Msg += "Is Primary Confirmation Bullish: "   + (IsPrimaryConfirmationBullish(CURRENT_BAR)     ? "Yes" : "No") + "\n";
+   Msg += "Is Primary Confirmation Bearish: "   + (IsPrimaryConfirmationBearish(CURRENT_BAR)     ? "Yes" : "No") + "\n";
+   Msg += "Is Secondary Confirmation Bullish: " + (IsSecondaryConfirmationBullish(CURRENT_BAR)   ? "Yes" : "No") + "\n";
+   Msg += "Is Secondary Confirmation Bearish: " + (IsSecondaryConfirmationBearish(CURRENT_BAR)   ? "Yes" : "No") + "\n";
+   Msg += "Is Dead Market: "                    + (IsDeadMarket(CURRENT_BAR)                     ? "Yes" : "No") + "\n";
+   Msg += "Is Active Bullish Market: "          + (IsActiveBullishMarket(CURRENT_BAR)            ? "Yes" : "No") + "\n";
+   Msg += "Is Active Bearish Market: "          + (IsActiveBearishMarket(CURRENT_BAR)            ? "Yes" : "No") + "\n";
+   Msg += "Should Exit Long: "                  + (ShouldExitLongFromExitIndicator(CURRENT_BAR)  ? "Yes" : "No") + "\n";
    Msg += "Should Exit Short: "                 + (ShouldExitShortFromExitIndicator(CURRENT_BAR) ? "Yes" : "No") + "\n";
    Msg += "ATR Value: "                         + DoubleToString(GetATRValue(CURRENT_BAR))                       + "\n";
    Msg += "Close Spread: "                      + IntegerToString(GetCloseSpreadInPts(CURRENT_BAR))              + "\n";
@@ -183,6 +186,7 @@ void IndicatorProcessor::UpdateAllIndicators(void) {
    CopyBuffer(SecondaryConfirmationHandle, VORTEX_BULLISH_VALUE_BUFFER  , 0, INDICATOR_BUFFER_SIZE, VortexBullishValueBuffer);
    CopyBuffer(SecondaryConfirmationHandle, VORTEX_BEARISH_VALUE_BUFFER  , 0, INDICATOR_BUFFER_SIZE, VortexBearishValueBuffer);
    CopyBuffer(VolumeHandle               , WAE_VOLUME_VALUE_BUFFER      , 0, INDICATOR_BUFFER_SIZE, WAEVolumeValueBuffer);
+   CopyBuffer(VolumeHandle               , WAE_VOLUME_DIRECTION_BUFFER  , 0, INDICATOR_BUFFER_SIZE, WAEVolumeDirectionBuffer);
    CopyBuffer(VolumeHandle               , WAE_SIGNAL_LINE_BUFFER       , 0, INDICATOR_BUFFER_SIZE, WAESignalValueBuffer);
    CopyBuffer(VolumeHandle               , WAE_DEATH_ZONE_BUFFER        , 0, INDICATOR_BUFFER_SIZE, WAEDeathZoneBuffer);
    CopyBuffer(ExitHandle                 , JURIK_FILTER_VALUE_BUFFER    , 0, INDICATOR_BUFFER_SIZE, JurikFilterValueBuffer);
@@ -197,12 +201,20 @@ void IndicatorProcessor::UpdateAllIndicators(void) {
 
 //--- Getters --- Baseline Indicator
 bool IndicatorProcessor::HasCandleCrossedBaseline(const int InputShift) const {
-   return HasCandleCrossedBaselineFromAbove(InputShift) || HasCandleCrossedBaselineFromBelow(InputShift);
+   return HasCandleCrossedBaselineFromAbove(InputShift) ||
+          HasCandleCrossedBaselineFromBelow(InputShift) ;
 }
 
 //--- Getters --- Baseline Indicator
 bool IndicatorProcessor::HasCandleCrossedBaselineFromAbove(const int InputShift) const {
-   return HasCandleCrossedBaselineFromAboveRegularCase(InputShift) || HasCandleCrossedBaselineFromAbovePriceGapCase(InputShift);
+   return HasCandleCrossedBaselineFromAboveNaiveCase(InputShift)   ||
+          HasCandleCrossedBaselineFromAboveRegularCase(InputShift) ||
+          HasCandleCrossedBaselineFromAbovePriceGapCase(InputShift);
+}
+
+//--- Helper Functions: HasCandleCrossedBaselineFromAbove
+bool IndicatorProcessor::HasCandleCrossedBaselineFromAboveNaiveCase(const int InputShift) const {
+   return IsAboveBaseline(InputShift + 1) && IsBelowBaseline(InputShift);
 }
 
 //--- Helper Functions: HasCandleCrossedBaselineFromAbove
@@ -219,7 +231,14 @@ bool IndicatorProcessor::HasCandleCrossedBaselineFromAbovePriceGapCase(const int
 
 //--- Getters --- Baseline Indicator
 bool IndicatorProcessor::HasCandleCrossedBaselineFromBelow(const int InputShift) const {
-   return HasCandleCrossedBaselineFromBelowRegularCase(InputShift) || HasCandleCrossedBaselineFromBelowPriceGapCase(InputShift);
+   return HasCandleCrossedBaselineFromBelowNaiveCase(InputShift)   ||
+          HasCandleCrossedBaselineFromBelowRegularCase(InputShift) ||
+          HasCandleCrossedBaselineFromBelowPriceGapCase(InputShift);
+}
+
+//--- Helper Functions: HasCandleCrossedBaselineFromBelow
+bool IndicatorProcessor::HasCandleCrossedBaselineFromBelowNaiveCase(const int InputShift) const {
+   return IsBelowBaseline(InputShift + 1) && IsAboveBaseline(InputShift);
 }
 
 //--- Helper Functions: HasCandleCrossedBaselineFromBelow
@@ -254,21 +273,37 @@ double IndicatorProcessor::GetSecondaryConfirmationBullishValue(const int InputS
 double IndicatorProcessor::GetSecondaryConfirmationBearishValue(const int InputShift) const { return NormalizeDouble(VortexBearishValueBuffer[InputShift], SymbolInfo.Digits());                          }
 
 //--- Getters --- Volume Indicator
-bool   IndicatorProcessor::IsDeadMarket(const int InputShift)      const { return !IsActiveMarket(InputShift);                                                                                              }
-bool   IndicatorProcessor::IsActiveMarket(const int InputShift)    const { return GetVolumeValue(InputShift) >= GetWAESignalValue(InputShift) && GetVolumeValue(InputShift) >= GetWAEDeathZone(InputShift); }
-double IndicatorProcessor::GetVolumeValue(const int InputShift)    const { return NormalizeDouble(WAEVolumeValueBuffer[InputShift], SymbolInfo.Digits());                                                   }
-double IndicatorProcessor::GetWAESignalValue(const int InputShift) const { return NormalizeDouble(WAESignalValueBuffer[InputShift], SymbolInfo.Digits());                                                   }
-double IndicatorProcessor::GetWAEDeathZone(const int InputShift)   const { return NormalizeDouble(WAEDeathZoneBuffer[InputShift]  , SymbolInfo.Digits());                                                   }
+bool IndicatorProcessor::IsDeadMarket(const int InputShift)   const { return !IsActiveBullishMarket(InputShift) || !IsActiveBearishMarket(InputShift); }
+bool IndicatorProcessor::IsActiveMarket(const int InputShift) const { return IsActiveBullishMarket(InputShift) || IsActiveBearishMarket(InputShift);   }
+
+//--- Getters --- Volume Indicator
+bool IndicatorProcessor::IsActiveBullishMarket(const int InputShift) const {
+   return GetVolumeValue(InputShift) > GetWAESignalValue(InputShift) &&
+          GetVolumeValue(InputShift) > GetWAEDeathZone(InputShift)   &&
+          GetVolumeDirection(InputShift) == WAE_BULLISH_DIRECTION     ;
+}
+
+//--- Getters --- Volume Indicator
+bool IndicatorProcessor::IsActiveBearishMarket(const int InputShift) const {
+   return GetVolumeValue(InputShift) > GetWAESignalValue(InputShift) &&
+          GetVolumeValue(InputShift) > GetWAEDeathZone(InputShift)   &&
+          GetVolumeDirection(InputShift) == WAE_BEARISH_DIRECTION     ;
+}
+
+double IndicatorProcessor::GetVolumeValue(const int InputShift)     const { return NormalizeDouble(WAEVolumeValueBuffer[InputShift], SymbolInfo.Digits());     }
+double IndicatorProcessor::GetVolumeDirection(const int InputShift) const { return WAEVolumeDirectionBuffer[InputShift];                                       }
+double IndicatorProcessor::GetWAESignalValue(const int InputShift)  const { return NormalizeDouble(WAESignalValueBuffer[InputShift], SymbolInfo.Digits());     }
+double IndicatorProcessor::GetWAEDeathZone(const int InputShift)    const { return NormalizeDouble(WAEDeathZoneBuffer[InputShift]  , SymbolInfo.Digits());     }
 
 //--- Getters --- Exit Indicator
-bool   IndicatorProcessor::ShouldExitLongFromExitIndicator(const int InputShift)      const { return IsExitBearish(InputShift);                                                    }
-bool   IndicatorProcessor::ShouldExitShortFromExitIndicator(const int InputShift)     const { return IsExitBullish(InputShift);                                                    }
-double IndicatorProcessor::GetExitBullishValue(const int InputShift) const { return IsExitBullish(InputShift) ? GetExitValue(InputShift) : 0;                     }
-double IndicatorProcessor::GetExitBearishValue(const int InputShift) const { return IsExitBearish(InputShift) ? GetExitValue(InputShift) : 0;                     }
-double IndicatorProcessor::GetExitValue(const int InputShift)        const { return NormalizeDouble(JurikFilterValueBuffer[InputShift], SymbolInfo.Digits());     }
-double IndicatorProcessor::GetExitDirection(const int InputShift)    const { return JurikFilterDirectionBuffer[InputShift];                                       }
-bool   IndicatorProcessor::IsExitBullish(const int InputShift)       const { return GetExitDirection(InputShift) == JURIK_BULLISH_DIRECTION;                      }
-bool   IndicatorProcessor::IsExitBearish(const int InputShift)       const { return GetExitDirection(InputShift) == JURIK_BEARISH_DIRECTION;                      }
+bool   IndicatorProcessor::ShouldExitLongFromExitIndicator(const int InputShift)  const { return IsExitBearish(InputShift);                                                    }
+bool   IndicatorProcessor::ShouldExitShortFromExitIndicator(const int InputShift) const { return IsExitBullish(InputShift);                                                    }
+double IndicatorProcessor::GetExitBullishValue(const int InputShift)              const { return IsExitBullish(InputShift) ? GetExitValue(InputShift) : 0;                     }
+double IndicatorProcessor::GetExitBearishValue(const int InputShift)              const { return IsExitBearish(InputShift) ? GetExitValue(InputShift) : 0;                     }
+double IndicatorProcessor::GetExitValue(const int InputShift)                     const { return NormalizeDouble(JurikFilterValueBuffer[InputShift], SymbolInfo.Digits());     }
+double IndicatorProcessor::GetExitDirection(const int InputShift)                 const { return JurikFilterDirectionBuffer[InputShift];                                       }
+bool   IndicatorProcessor::IsExitBullish(const int InputShift)                    const { return GetExitDirection(InputShift) == JURIK_BULLISH_DIRECTION;                      }
+bool   IndicatorProcessor::IsExitBearish(const int InputShift)                    const { return GetExitDirection(InputShift) == JURIK_BEARISH_DIRECTION;                      }
 
 //--- Getters --- ATR Indicator
 double IndicatorProcessor::GetATRValue(const int InputShift)                                const { return NormalizeDouble(ATRValueBuffer[InputShift]                  , SymbolInfo.Digits()); }

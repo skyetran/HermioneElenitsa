@@ -8,6 +8,8 @@
 #include "../General/IndicatorProcessor.mqh"
 #include "../Wrapper/MqlTradeRequestWrapper.mqh"
 
+#define MIN_ATR_MULTIPLIER       0
+
 #define BRIDGE_TOO_FAR_LOOK_BACK 7
 
 class SignalGenerator
@@ -19,6 +21,9 @@ public:
    //--- Debug Functions
    string GetDebugMsg(void) const;
    
+   //--- OnInit Functions
+   bool SetATRMultiplier(const double InputATRMultiplier);
+   
    //--- OnTick Functions
    void Update(void);
    
@@ -26,6 +31,10 @@ public:
    MqlTradeRequestWrapper *GetNextSignal(void);
    bool                    GetExitLongSignal(void);
    bool                    GetExitShortSignal(void);
+   
+   //--- Auxilary Functions
+   datetime GetLastMarketSwitchDateTime(void)     const;
+   datetime GetLastLastMarketSwitchDateTime(void) const;
    
 private:
    //--- Trade Class Instances
@@ -35,40 +44,60 @@ private:
    GlobalFunctions    *GF;
    IndicatorProcessor *IP;
    
+   //--- NNFX Settings
+   double ATRMultiplier;
+   
    //--- Tracking DateTime Variables
    datetime CurrentDateTime;
    datetime TailingDateTime;
    datetime LastDateTime;
    datetime LastLastDateTime;
-   datetime StartDateTime;   
+   datetime LongStartDateTime;
+   datetime ShortStartDateTime;   
+   
+   //--- Auxilary Variables
+   datetime LastMarketSwitchDateTime;
+   datetime TailingLastMarketSwitchDateTime;
+   datetime LastLastMarketSwitchDateTime;
    
    //--- Tracking Time Flag Variables
    bool NewCandleFlag;
    
-   //--- Tracking Flag Variables
-   bool LongEntrySignalFlag;
-   bool ShortEntrySignalFlag;
-   
-   bool ResetTrackingVariablesFlag;
+   //--- Tracking Long Flag Variables
+   bool ResetLongTrackingVariablesFlag;
    bool LongOrderExitFlag;
-   bool ShortOrderExitFlag;
-   bool FirstClosedCandleFlag;
    bool FirstClosedLongCandleFlag;
-   bool FirstClosedShortCandleFlag;
-   bool SecondClosedCandleFlag;
-   bool BridgeTooFarFlag;
-   bool LookingForBaselineEntryFlag;
-   bool BaselineEntryFlag;
-   bool LookingForPullBackEntryFlag;
-   bool PullBackEntryFlag;
-   bool LookingForStandardEntryFlag;
-   bool StandardEntryFlag;
-   bool LookingForContinuationEntryFlag;
-   bool ContinuationEntryFlag;
-   bool FirstEntrySignalFlag;
+   bool SecondClosedLongCandleFlag;
+   bool LongBridgeTooFarFlag;
+   bool LookingForBaselineLongEntryFlag;
+   bool BaselineLongEntryFlag;
+   bool LookingForPullBackLongEntryFlag;
+   bool PullBackLongEntryFlag;
+   bool LookingForStandardLongEntryFlag;
+   bool StandardLongEntryFlag;
+   bool LookingForContinuationLongEntryFlag;
+   bool ContinuationLongEntryFlag;
    bool FirstLongEntrySignalFlag;
+   bool LongEntrySignalFlag;
+   bool HasTradedThisCandleLongFlag;
+   
+   //--- Tracking Short Flag Variables
+   bool ResetShortTrackingVariablesFlag;
+   bool ShortOrderExitFlag;
+   bool FirstClosedShortCandleFlag;
+   bool SecondClosedShortCandleFlag;
+   bool ShortBridgeTooFarFlag;
+   bool LookingForBaselineShortEntryFlag;
+   bool BaselineShortEntryFlag;
+   bool LookingForPullBackShortEntryFlag;
+   bool PullBackShortEntryFlag;
+   bool LookingForStandardShortEntryFlag;
+   bool StandardShortEntryFlag;
+   bool LookingForContinuationShortEntryFlag;
+   bool ContinuationShortEntryFlag;
    bool FirstShortEntrySignalFlag;
-   bool HasTradedThisCandleFlag;
+   bool ShortEntrySignalFlag;
+   bool HasTradedThisCandleShortFlag;
    
    //--- Singleton Instance
    static SignalGenerator *Instance;
@@ -79,60 +108,70 @@ private:
    //--- Helper Functions: Constructor
    void InitTrackingVariables(void);
    
+   //--- Helper Functions: SetATRMultiplier --- OnInit Functions
+   bool IsATRMultiplierValid(const double InputATRMultiplier) const;
+   
    //--- Helper Functions: Update --- OnTick Functions
-   void ResetTrackingVariables(void);
+   void UpdateBothSide(void);
+   void UpdateLongSide(void);
+   void UpdateShortSide(void);
+   
+   //--- Helper Functions: UpdateBothSide --- OnTick Functions
+   void ResetLongTrackingVariables(void);
+   void ResetShortTrackingVariables(void);
    void UpdateNewCandleFlag(void);
-   void ResetHasTradedThisCandleFlag(void);
+   void ResetHasTradedThisCandleLongFlag(void);
+   void ResetHasTradedThisCandleShortFlag(void);
    void UpdateDateTimeVariables(void);
    void UpdateLongOrderExitFlag(void);
    void UpdateShortOrderExitFlag(void);
-   void UpdateFirstClosedCandleFlag(void);
+   
+   //--- Helper Functions: UpdateLongSide --- OnTick Functions
    void UpdateFirstClosedLongCandleFlag(void);
-   void UpdateFirstClosedShortCandleFlag(void);
-   void UpdateSecondClosedCandleFlag(void);
-   void UpdateBridgeTooFarFlag(void);
-   void UpdateLookingForBaselineEntryFlag(void);
-   void UpdateBaselineEntryFlag(void);
-   void UpdateLookingForPullBackEntryFlag(void);
-   void UpdatePullBackEntryFlag(void);
-   void UpdateLookingForStandardEntryFlag(void);
-   void UpdateStandardEntryFlag(void);
-   void UpdateLookingForContinuationEntryFlag(void);
-   void UpdateContinuationEntryFlag(void);
-   void UpdateFirstEntrySignalFlag(void);
+   void UpdateSecondClosedLongCandleFlag(void);
+   void UpdateLongBridgeTooFarFlag(void);
+   void UpdateLookingForBaselineLongEntryFlag(void);
+   void UpdateBaselineLongEntryFlag(void);
+   void UpdateLookingForPullBackLongEntryFlag(void);
+   void UpdatePullBackLongEntryFlag(void);
+   void UpdateLookingForStandardLongEntryFlag(void);
+   void UpdateStandardLongEntryFlag(void);
+   void UpdateLookingForContinuationLongEntryFlag(void);
+   void UpdateContinuationLongEntryFlag(void);
    void UpdateFirstLongEntrySignalFlag(void);
+   void UpdateLongEntrySignalFlag(void);
+   void UpdateHasTradedThisCandleLongFlag(void);
+   
+   //--- Helper Functions: UpdateShortSide --- OnTick Functions
+   void UpdateFirstClosedShortCandleFlag(void);
+   void UpdateSecondClosedShortCandleFlag(void);
+   void UpdateShortBridgeTooFarFlag(void);
+   void UpdateLookingForBaselineShortEntryFlag(void);
+   void UpdateBaselineShortEntryFlag(void);
+   void UpdateLookingForPullBackShortEntryFlag(void);
+   void UpdatePullBackShortEntryFlag(void);
+   void UpdateLookingForStandardShortEntryFlag(void);
+   void UpdateStandardShortEntryFlag(void);
+   void UpdateLookingForContinuationShortEntryFlag(void);
+   void UpdateContinuationShortEntryFlag(void);
    void UpdateFirstShortEntrySignalFlag(void);
-   void UpdateHasTradedThisCandleFlag(void);
+   void UpdateShortEntrySignalFlag(void);
+   void UpdateHasTradedThisCandleShortFlag(void);
    
    //--- Helper Functions: GetNextSignal
-   void ResetEntrySignalTrackingVariables(void);
+   void ResetLongEntrySignalTrackingVariables(void);
+   void ResetShortEntrySignalTrackingVariables(void);
    
    //--- Helper Functions: UpdateDateTimeVariables --- OnTickFunctions
    void UpdateCurrentDateTime(void);
    void UpdateTailingDateTime(void);
    void UpdateLastDateTime(void);
    void UpdateLastLastDateTime(void);
-   void UpdateStartDateTime(void);
+   void UpdateLongStartDateTime(void);
+   void UpdateShortStartDateTime(void);
    
-   //--- Helper Functions: UpdateBrideTooFarFlag --- OnTick Functions
-   void UpdateBridgeTooFarFlagFromAbove(void);
-   void UpdateBridgeTooFarFlagFromBelow(void);
-   
-   //--- Helper Functions: UpdateBaselineEntryFlag --- OnTick Functions
-   void UpdateBaselineLongEntryFlag(void);
-   void UpdateBaselineShortEntryFlag(void);
-   
-   //--- Helper Functions: UpdatePullBackEntryFlag --- OnTick Functions
-   void UpdatePullBackLongEntryFlag(void);
-   void UpdatePullBackShortEntryFlag(void);
-   
-   //--- Helper Functions: UpdateStandardEntryFlag --- OnTick Functions
-   void UpdateStandardLongEntryFlag(void);
-   void UpdateStandardShortEntryFlag(void);
-   
-   //--- Helper Functions: UpdateContinuationEntryFlag --- OnTick Functions
-   void UpdateContinuationLongEntryFlag(void);
-   void UpdateContinuationShortEntryFlag(void);
+   //--- Helper Functions: Update Auxilary Vairables --- OnTickFunctions
+   void UpdateMarketSwitchDateTime(void);
    
    //--- Helper Functions: Line Up Indicator Signals
    bool IndicatorsGiveStandardLongSignal(const int InputShift)      const;
