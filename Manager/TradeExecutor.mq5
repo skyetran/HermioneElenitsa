@@ -132,7 +132,7 @@ void TradeExecutor::ExecuteLongEntrySignal(void) {
    for (int i = 0; i < LongRequestList.Count(); i++) {
       if (LongRequestList.TryGetValue(i, TempRequestWrapper)) {
          TempRequestWrapper.Unwrap(TempRequest);
-         Trade.Buy(1, SymbolInfo.Name(), 0.0, TempRequest.sl, TempRequest.tp);
+         Trade.Buy(0.1, SymbolInfo.Name(), 0.0, TempRequest.sl, TempRequest.tp);
          LongRequestList.RemoveAt(i);
       }
    }
@@ -142,10 +142,10 @@ void TradeExecutor::ExecuteLongEntrySignal(void) {
 void TradeExecutor::ExecuteShortEntrySignal(void) {
    MqlTradeRequestWrapper *TempRequestWrapper;
    MqlTradeRequest         TempRequest = {};
-   for (int i = 0; i < LongRequestList.Count(); i++) {
+   for (int i = 0; i < ShortRequestList.Count(); i++) {
       if (ShortRequestList.TryGetValue(i, TempRequestWrapper)) {
          TempRequestWrapper.Unwrap(TempRequest);
-         Trade.Sell(1, SymbolInfo.Name(), 0.0, TempRequest.sl, TempRequest.tp);
+         Trade.Sell(0.1, SymbolInfo.Name(), 0.0, TempRequest.sl, TempRequest.tp);
          ShortRequestList.RemoveAt(i);
       }
    }

@@ -266,8 +266,8 @@ void SignalGenerator::UpdateLongSide(void) {
    UpdatePullBackLongEntryFlag();
    UpdateLookingForStandardLongEntryFlag();
    UpdateStandardLongEntryFlag();
-   UpdateLookingForContinuationLongEntryFlag();
-   UpdateContinuationLongEntryFlag();
+   //UpdateLookingForContinuationLongEntryFlag();
+   //UpdateContinuationLongEntryFlag();
    UpdateFirstLongEntrySignalFlag();
    UpdateLongEntrySignalFlag();
    UpdateHasTradedThisCandleLongFlag();
@@ -412,8 +412,8 @@ void SignalGenerator::UpdateShortSide(void) {
    UpdatePullBackShortEntryFlag();
    UpdateLookingForStandardShortEntryFlag();
    UpdateStandardShortEntryFlag();
-   UpdateLookingForContinuationShortEntryFlag();
-   UpdateContinuationShortEntryFlag();
+   //UpdateLookingForContinuationShortEntryFlag();
+   //UpdateContinuationShortEntryFlag();
    UpdateFirstShortEntrySignalFlag();
    UpdateShortEntrySignalFlag();
    UpdateHasTradedThisCandleShortFlag();
@@ -570,29 +570,27 @@ bool SignalGenerator::IndicatorsGiveStandardShortSignal(const int InputShift) co
 //--- Helper Functions: Line Up Indicator Signals
 bool SignalGenerator::IndicatorsGiveContinuationLongSignal(const int InputShift) const {
    return IP.IsAboveBaseline(InputShift)                  &&
-          IP.IsPrimaryConfirmationBearish(InputShift + 1) &&
           IP.IsPrimaryConfirmationBullish(InputShift)     &&
-          IP.IsSecondaryConfirmationBullish(InputShift)    ;
+          IP.IsContinuousBearish(InputShift + 1)          &&
+          IP.IsContinuousBullish(InputShift)               ;
 }
 
 //--- Helper Functions: Line Up Indicator Signals
 bool SignalGenerator::IndicatorsGiveContinuationShortSignal(const int InputShift) const {
    return IP.IsBelowBaseline(InputShift)                  &&
-          IP.IsPrimaryConfirmationBullish(InputShift + 1) &&
           IP.IsPrimaryConfirmationBearish(InputShift)     &&
-          IP.IsSecondaryConfirmationBearish(InputShift)    ;
+          IP.IsContinuousBullish(InputShift + 1)          &&
+          IP.IsContinuousBearish(InputShift)               ;
 }
 
 //--- Helper Functions: Line Up Indicator Signals
 bool SignalGenerator::IndicatorsGiveExitLongSignal(const int InputShift) const {
-   return IP.IsPrimaryConfirmationBearish(InputShift)  ||
-          IP.ShouldExitLongFromExitIndicator(InputShift);
+   return IP.IsPrimaryConfirmationBearish(InputShift);
 }
 
 //--- Helper Functions: Line Up Indicator Signals
 bool SignalGenerator::IndicatorsGiveExitShortSignal(const int InputShift) const {
-   return IP.IsSecondaryConfirmationBullish(InputShift) ||
-          IP.ShouldExitShortFromExitIndicator(InputShift);
+   return IP.IsPrimaryConfirmationBullish(InputShift);
 }
 
 //--- Getters --- OnTick Functions

@@ -18,7 +18,7 @@ extern string              Text2                            = "Baseline Indicato
 input  int                 SuperSmootherPeriod              = 20;
 
 extern string              Text3                            = "Primary Indicator Settings";
-input  int                 EhlerFisherPeriod                = 14;
+input  int                 EhlerFisherPeriod                = 32;
 
 extern string              Text4                            = "Secondary Indicator Settings";
 input  int                 VortexPeriod                     = 10;
@@ -40,10 +40,13 @@ input  int                 JurikPhase                       = 180;
 extern string              Text7                            = "ATR Indicator Settings";
 input  int                 ATRPeriod                        = 14;
 
-extern string              Text8                            = "Flexible NNFX Trade Settings";
+extern string              Text8                            = "Continuous Indicator Settings";
+input  int                 EhlerFisherContinuousPeriod      = 10;
+
+extern string              Text9                            = "Flexible NNFX Trade Settings";
 input  double              ATRMultiplier                    = 1.0;
 
-extern string              Text9                            = "Expert Advisor Trade Settings";
+extern string              Text10                            = "Expert Advisor Trade Settings";
 input  int                 MagicNumber                      = 196735465;
 input  int                 Deviation                        = 5;
 
@@ -67,7 +70,8 @@ bool InitIndicators(void) {
        IP.SetSecondaryConfirmationParameters(VortexPeriod)                                                                                                   &&
        IP.SetVolumeIndicatorParameters(FastMACDPeriod, SlowMACDPeriod, BollingerPeriod, BollingerDeviation, Sensitive, DeadZone, ExplosionPower, TrendPower) &&
        IP.SetExitIndicatorParameters(JurikPeriod, JurikPhase)                                                                                                &&
-       IP.SetATRParameters(ATRPeriod)                                                                                                                         ) {
+       IP.SetATRParameters(ATRPeriod)                                                                                                                        &&
+       IP.SetContinuousParameters(EhlerFisherContinuousPeriod)                                                                                               ) {
       IP.Init();
       return true;
     }
@@ -78,21 +82,8 @@ void OnTick() {
    Update();
    string DebugMsg;
    //DebugMsg += GF.GetDebugMsg() + "\n";
-   //DebugMsg += IP.GetDebugMsg() + "\n";
-   DebugMsg += SG.GetDebugMsg() + "\n";
-   
-   SG.GetExitLongSignal();
-   SG.GetExitShortSignal();
-   MqlTradeRequestWrapper *Request = SG.GetNextSignal();
-   
-   static int i = 0;
-   if (Request) {
-      if (Request.tp > Request.sl) {
-         ObjectCreate(0, IntegerToString(i++), OBJ_ARROW_BUY, 0, TimeCurrent(), IP.GetAskPrice(CURRENT_BAR));
-      } else {
-         ObjectCreate(0, IntegerToString(i++), OBJ_ARROW_SELL, 0, TimeCurrent(), IP.GetBidPrice(CURRENT_BAR));
-      }
-   }
+   DebugMsg += IP.GetDebugMsg() + "\n";
+   //DebugMsg += SG.GetDebugMsg() + "\n";
    
    Comment(DebugMsg);
 }

@@ -8,23 +8,25 @@ IndicatorProcessor::IndicatorProcessor(void) {
    
    SymbolInfo.Name(Symbol());
    
-   ArraySetAsSeries(SuperSmootherValueBuffer  , true);
-   ArraySetAsSeries(EhlerFisherValueBuffer    , true);
-   ArraySetAsSeries(EhlerFisherDirectionBuffer, true);
-   ArraySetAsSeries(VortexBullishValueBuffer  , true);
-   ArraySetAsSeries(VortexBearishValueBuffer  , true);
-   ArraySetAsSeries(WAEVolumeValueBuffer      , true);
-   ArraySetAsSeries(WAEVolumeDirectionBuffer  , true);
-   ArraySetAsSeries(WAESignalValueBuffer      , true);
-   ArraySetAsSeries(WAEDeathZoneBuffer        , true);
-   ArraySetAsSeries(JurikFilterValueBuffer    , true);
-   ArraySetAsSeries(JurikFilterDirectionBuffer, true);
-   ArraySetAsSeries(ATRValueBuffer            , true);
-   ArraySetAsSeries(OpenSpreadBuffer          , true);
-   ArraySetAsSeries(HighSpreadBuffer          , true);
-   ArraySetAsSeries(LowSpreadBuffer           , true);
-   ArraySetAsSeries(CloseSpreadBuffer         , true);
-   ArraySetAsSeries(AverageSpreadBuffer       , true);
+   ArraySetAsSeries(SuperSmootherValueBuffer            , true);
+   ArraySetAsSeries(EhlerFisherValueBuffer              , true);
+   ArraySetAsSeries(EhlerFisherDirectionBuffer          , true);
+   ArraySetAsSeries(VortexBullishValueBuffer            , true);
+   ArraySetAsSeries(VortexBearishValueBuffer            , true);
+   ArraySetAsSeries(WAEVolumeValueBuffer                , true);
+   ArraySetAsSeries(WAEVolumeDirectionBuffer            , true);
+   ArraySetAsSeries(WAESignalValueBuffer                , true);
+   ArraySetAsSeries(WAEDeathZoneBuffer                  , true);
+   ArraySetAsSeries(JurikFilterValueBuffer              , true);
+   ArraySetAsSeries(JurikFilterDirectionBuffer          , true);
+   ArraySetAsSeries(ATRValueBuffer                      , true);
+   ArraySetAsSeries(OpenSpreadBuffer                    , true);
+   ArraySetAsSeries(HighSpreadBuffer                    , true);
+   ArraySetAsSeries(LowSpreadBuffer                     , true);
+   ArraySetAsSeries(CloseSpreadBuffer                   , true);
+   ArraySetAsSeries(AverageSpreadBuffer                 , true);
+   ArraySetAsSeries(EhlerFisherContinuousValueBuffer    , true);
+   ArraySetAsSeries(EhlerFisherContinuousDirectionBuffer, true);
 }
 
 //--- Get Singleton Instance
@@ -55,6 +57,8 @@ string IndicatorProcessor::GetDebugMsg(void) const {
    Msg += "Close Spread: "                      + IntegerToString(GetCloseSpreadInPts(CURRENT_BAR))              + "\n";
    Msg += "Average Spread: "                    + IntegerToString(GetAverageSpreadInPts(CURRENT_BAR))            + "\n";
    Msg += "Average Spread In Price: "           + DoubleToString(GetAverageSpreadInPrice(CURRENT_BAR))           + "\n";
+   Msg += "Is Continuous Bullish: "             + (IsContinuousBullish(CURRENT_BAR)              ? "Yes" : "No") + "\n";
+   Msg += "Is Continuous Bearish: "             + (IsContinuousBearish(CURRENT_BAR)              ? "Yes" : "No") + "\n";
    return Msg;
 }
 
@@ -67,6 +71,7 @@ void IndicatorProcessor::Init(void) {
    ExitHandle                  = iCustom(SymbolInfo.Name(), PERIOD_D1, "jurik_filter", JurikPeriod, JurikPhase);
    ATRHandle                   = iCustom(SymbolInfo.Name(), PERIOD_D1, "Examples/ATR", ATRPeriod);
    SpreadHandle                = iCustom(SymbolInfo.Name(), PERIOD_D1, "Spread_Record");
+   ContinuousHandle            = iCustom(SymbolInfo.Name(), PERIOD_D1, "Ehlers Fisher transform (original)", EhlerFisherContinuousPeriod);
 }
 
 //--- Setters --- OnInit Functions
@@ -164,6 +169,18 @@ bool IndicatorProcessor::SetATRParameters(const int &InputPeriod) {
 //--- ATR Indicator Parameters Validation Checks
 bool IndicatorProcessor::IsATRIndicatorParametersValid(const int &InputPeriod) const { return IsPeriodValid(InputPeriod); }
 
+//--- Setters --- OnInit Functions
+bool IndicatorProcessor::SetContinuousParameters(const int &InputPeriod) {
+   if (IsContinuousIndicatorParametersValid(InputPeriod)) {
+      EhlerFisherContinuousPeriod = InputPeriod;
+      return true;
+   }
+   return false;
+}
+
+//--- Continuous Indicator Parameters Validation Checks
+bool IndicatorProcessor::IsContinuousIndicatorParametersValid(const int &InputPeriod) const { return IsPeriodValid(InputPeriod); }
+
 //--- Helper Functions: Parameters Validation Checks
 bool IndicatorProcessor::IsPeriodValid(const int &InputPeriod)                                         const { return InputPeriod >= MIN_PERIOD;                             }
 bool IndicatorProcessor::IsFastSlowPeriodValid(const int &InputFastPeriod, const int &InputSlowPeriod) const { return InputFastPeriod < InputSlowPeriod;                     }
@@ -180,23 +197,25 @@ void IndicatorProcessor::Update(void) {
 
 //--- OnTick Functions
 void IndicatorProcessor::UpdateAllIndicators(void) {
-   CopyBuffer(BaselineHandle             , SUPER_SMOOTHER_VALUE_BUFFER  , 0, INDICATOR_BUFFER_SIZE, SuperSmootherValueBuffer);
-   CopyBuffer(PrimaryConfirmationHandle  , EHLER_FISHER_VALUE_BUFFER    , 0, INDICATOR_BUFFER_SIZE, EhlerFisherValueBuffer);
-   CopyBuffer(PrimaryConfirmationHandle  , EHLER_FISHER_DIRECTION_BUFFER, 0, INDICATOR_BUFFER_SIZE, EhlerFisherDirectionBuffer);
-   CopyBuffer(SecondaryConfirmationHandle, VORTEX_BULLISH_VALUE_BUFFER  , 0, INDICATOR_BUFFER_SIZE, VortexBullishValueBuffer);
-   CopyBuffer(SecondaryConfirmationHandle, VORTEX_BEARISH_VALUE_BUFFER  , 0, INDICATOR_BUFFER_SIZE, VortexBearishValueBuffer);
-   CopyBuffer(VolumeHandle               , WAE_VOLUME_VALUE_BUFFER      , 0, INDICATOR_BUFFER_SIZE, WAEVolumeValueBuffer);
-   CopyBuffer(VolumeHandle               , WAE_VOLUME_DIRECTION_BUFFER  , 0, INDICATOR_BUFFER_SIZE, WAEVolumeDirectionBuffer);
-   CopyBuffer(VolumeHandle               , WAE_SIGNAL_LINE_BUFFER       , 0, INDICATOR_BUFFER_SIZE, WAESignalValueBuffer);
-   CopyBuffer(VolumeHandle               , WAE_DEATH_ZONE_BUFFER        , 0, INDICATOR_BUFFER_SIZE, WAEDeathZoneBuffer);
-   CopyBuffer(ExitHandle                 , JURIK_FILTER_VALUE_BUFFER    , 0, INDICATOR_BUFFER_SIZE, JurikFilterValueBuffer);
-   CopyBuffer(ExitHandle                 , JURIK_FILTER_DIRECTION_BUFFER, 0, INDICATOR_BUFFER_SIZE, JurikFilterDirectionBuffer);
-   CopyBuffer(ATRHandle                  , ATR_VALUE_BUFFER             , 0, INDICATOR_BUFFER_SIZE, ATRValueBuffer);
-   CopyBuffer(SpreadHandle               , OPEN_SPREAD_BUFFER           , 0, INDICATOR_BUFFER_SIZE, OpenSpreadBuffer);
-   CopyBuffer(SpreadHandle               , HIGH_SPREAD_BUFFER           , 0, INDICATOR_BUFFER_SIZE, HighSpreadBuffer);
-   CopyBuffer(SpreadHandle               , LOW_SPREAD_BUFFER            , 0, INDICATOR_BUFFER_SIZE, LowSpreadBuffer);
-   CopyBuffer(SpreadHandle               , CLOSE_SPREAD_BUFFER          , 0, INDICATOR_BUFFER_SIZE, CloseSpreadBuffer);
-   CopyBuffer(SpreadHandle               , AVERAGE_SPREAD_BUFFER        , 0, INDICATOR_BUFFER_SIZE, AverageSpreadBuffer);
+   CopyBuffer(BaselineHandle             , SUPER_SMOOTHER_VALUE_BUFFER       , 0, INDICATOR_BUFFER_SIZE, SuperSmootherValueBuffer);
+   CopyBuffer(PrimaryConfirmationHandle  , EHLER_FISHER_VALUE_BUFFER         , 0, INDICATOR_BUFFER_SIZE, EhlerFisherValueBuffer);
+   CopyBuffer(PrimaryConfirmationHandle  , EHLER_FISHER_DIRECTION_BUFFER     , 0, INDICATOR_BUFFER_SIZE, EhlerFisherDirectionBuffer);
+   CopyBuffer(SecondaryConfirmationHandle, VORTEX_BULLISH_VALUE_BUFFER       , 0, INDICATOR_BUFFER_SIZE, VortexBullishValueBuffer);
+   CopyBuffer(SecondaryConfirmationHandle, VORTEX_BEARISH_VALUE_BUFFER       , 0, INDICATOR_BUFFER_SIZE, VortexBearishValueBuffer);
+   CopyBuffer(VolumeHandle               , WAE_VOLUME_VALUE_BUFFER           , 0, INDICATOR_BUFFER_SIZE, WAEVolumeValueBuffer);
+   CopyBuffer(VolumeHandle               , WAE_VOLUME_DIRECTION_BUFFER       , 0, INDICATOR_BUFFER_SIZE, WAEVolumeDirectionBuffer);
+   CopyBuffer(VolumeHandle               , WAE_SIGNAL_LINE_BUFFER            , 0, INDICATOR_BUFFER_SIZE, WAESignalValueBuffer);
+   CopyBuffer(VolumeHandle               , WAE_DEATH_ZONE_BUFFER             , 0, INDICATOR_BUFFER_SIZE, WAEDeathZoneBuffer);
+   CopyBuffer(ExitHandle                 , JURIK_FILTER_VALUE_BUFFER         , 0, INDICATOR_BUFFER_SIZE, JurikFilterValueBuffer);
+   CopyBuffer(ExitHandle                 , JURIK_FILTER_DIRECTION_BUFFER     , 0, INDICATOR_BUFFER_SIZE, JurikFilterDirectionBuffer);
+   CopyBuffer(ATRHandle                  , ATR_VALUE_BUFFER                  , 0, INDICATOR_BUFFER_SIZE, ATRValueBuffer);
+   CopyBuffer(SpreadHandle               , OPEN_SPREAD_BUFFER                , 0, INDICATOR_BUFFER_SIZE, OpenSpreadBuffer);
+   CopyBuffer(SpreadHandle               , HIGH_SPREAD_BUFFER                , 0, INDICATOR_BUFFER_SIZE, HighSpreadBuffer);
+   CopyBuffer(SpreadHandle               , LOW_SPREAD_BUFFER                 , 0, INDICATOR_BUFFER_SIZE, LowSpreadBuffer);
+   CopyBuffer(SpreadHandle               , CLOSE_SPREAD_BUFFER               , 0, INDICATOR_BUFFER_SIZE, CloseSpreadBuffer);
+   CopyBuffer(SpreadHandle               , AVERAGE_SPREAD_BUFFER             , 0, INDICATOR_BUFFER_SIZE, AverageSpreadBuffer);
+   CopyBuffer(ContinuousHandle           , EHLER_FISHER_CONT_VALUE_BUFFER    , 0, INDICATOR_BUFFER_SIZE, EhlerFisherContinuousValueBuffer);
+   CopyBuffer(ContinuousHandle           , EHLER_FISHER_CONT_DIRECTION_BUFFER, 0, INDICATOR_BUFFER_SIZE, EhlerFisherContinuousDirectionBuffer);
 }
 
 //--- Getters --- Baseline Indicator
@@ -370,6 +389,14 @@ double IndicatorProcessor::GetHighSpreadInPrice(const int InputShift)    const {
 double IndicatorProcessor::GetLowSpreadInPrice(const int InputShift)     const { return GF.PointToPriceCvt(GetLowSpreadInPts(InputShift));     }
 double IndicatorProcessor::GetCloseSpreadInPrice(const int InputShift)   const { return GF.PointToPriceCvt(GetCloseSpreadInPts(InputShift));   }
 double IndicatorProcessor::GetAverageSpreadInPrice(const int InputShift) const { return GF.PointToPriceCvt(GetAverageSpreadInPts(InputShift)); }
+
+//--- Getters --- Continuous Indicator
+double IndicatorProcessor::GetContinuousBullishValue(const int InputShift) const { return IsContinuousBullish(InputShift) ? GetContinuousValue(InputShift) : 0;               }
+double IndicatorProcessor::GetContinuousBearishValue(const int InputShift) const { return IsContinuousBearish(InputShift) ? GetContinuousValue(InputShift) : 0;               }
+double IndicatorProcessor::GetContinuousValue(const int InputShift)        const { return NormalizeDouble(EhlerFisherContinuousValueBuffer[InputShift], SymbolInfo.Digits()); }
+double IndicatorProcessor::GetContinuousDirection(const int InputShift)    const { return EhlerFisherContinuousDirectionBuffer[InputShift];                                   }
+bool   IndicatorProcessor::IsContinuousBullish(const int InputShift)       const { return GetContinuousDirection(InputShift) == EHLER_FISHER_BULLISH_DIRECTION;               }
+bool   IndicatorProcessor::IsContinuousBearish(const int InputShift)       const { return GetContinuousDirection(InputShift) == EHLER_FISHER_BEARISH_DIRECTION;               }
 
 //--- Getters --- Approximate Past Tick Value
 double IndicatorProcessor::GetBidPrice(const int InputShift) const {

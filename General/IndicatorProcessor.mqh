@@ -7,56 +7,60 @@
 #include "GlobalFunctions.mqh"
 
 //--- Base Line Indicator
-#define SUPER_SMOOTHER_VALUE_BUFFER       0
+#define SUPER_SMOOTHER_VALUE_BUFFER          0
 
 //--- Primary Confirmation Indicator
-#define EHLER_FISHER_VALUE_BUFFER         0
-#define EHLER_FISHER_DIRECTION_BUFFER     1
+#define EHLER_FISHER_VALUE_BUFFER            0
+#define EHLER_FISHER_DIRECTION_BUFFER        1
 
 //--- Secondary Confirmation Indicator
-#define VORTEX_BULLISH_VALUE_BUFFER       0
-#define VORTEX_BEARISH_VALUE_BUFFER       1
+#define VORTEX_BULLISH_VALUE_BUFFER          0
+#define VORTEX_BEARISH_VALUE_BUFFER          1
 
 //--- Volume Indicator
-#define WAE_VOLUME_VALUE_BUFFER           0
-#define WAE_VOLUME_DIRECTION_BUFFER       1
-#define WAE_SIGNAL_LINE_BUFFER            2
-#define WAE_DEATH_ZONE_BUFFER             3
+#define WAE_VOLUME_VALUE_BUFFER              0
+#define WAE_VOLUME_DIRECTION_BUFFER          1
+#define WAE_SIGNAL_LINE_BUFFER               2
+#define WAE_DEATH_ZONE_BUFFER                3
 
 //--- Exit Indicator
-#define JURIK_FILTER_VALUE_BUFFER         0
-#define JURIK_FILTER_DIRECTION_BUFFER     1
+#define JURIK_FILTER_VALUE_BUFFER            0
+#define JURIK_FILTER_DIRECTION_BUFFER        1
 
 //--- ATR Indicator
-#define ATR_VALUE_BUFFER                  0
+#define ATR_VALUE_BUFFER                     0
+
+//--- Continuous Indicator
+#define EHLER_FISHER_CONT_VALUE_BUFFER       0
+#define EHLER_FISHER_CONT_DIRECTION_BUFFER   1
 
 //--- Spread Indicator
-#define OPEN_SPREAD_BUFFER                0
-#define HIGH_SPREAD_BUFFER                1
-#define LOW_SPREAD_BUFFER                 2
-#define CLOSE_SPREAD_BUFFER               3
-#define AVERAGE_SPREAD_BUFFER             4
+#define OPEN_SPREAD_BUFFER                   0
+#define HIGH_SPREAD_BUFFER                   1
+#define LOW_SPREAD_BUFFER                    2
+#define CLOSE_SPREAD_BUFFER                  3
+#define AVERAGE_SPREAD_BUFFER                4
 
 //--- Parameters Bound
-#define MIN_PERIOD                        2
-#define ZERO                              0
-#define MIN_PHASE                         0
-#define MAX_PHASE                         359
+#define MIN_PERIOD                           2
+#define ZERO                                 0
+#define MIN_PHASE                            0
+#define MAX_PHASE                            359
 
 //--- Buffer Boundary
-#define INDICATOR_BUFFER_SIZE             8
+#define INDICATOR_BUFFER_SIZE                8
 
 //--- Ehler Fisher Constants
-#define EHLER_FISHER_BULLISH_DIRECTION    1
-#define EHLER_FISHER_BEARISH_DIRECTION    2
+#define EHLER_FISHER_BULLISH_DIRECTION       1
+#define EHLER_FISHER_BEARISH_DIRECTION       2
 
 //--- WAE Constants
-#define WAE_BULLISH_DIRECTION             1
-#define WAE_BEARISH_DIRECTION             2
+#define WAE_BULLISH_DIRECTION                1
+#define WAE_BEARISH_DIRECTION                2
 
 //--- Jurik Filter Constants
-#define JURIK_BULLISH_DIRECTION           0
-#define JURIK_BEARISH_DIRECTION           1
+#define JURIK_BULLISH_DIRECTION              0
+#define JURIK_BEARISH_DIRECTION              1
 
 class IndicatorProcessor
 {
@@ -80,6 +84,7 @@ public:
                                      const int &InputExplosionPower, const int &InputTrendPower);
    bool SetExitIndicatorParameters(const int &InputPeriod, const int &InputPhase);
    bool SetATRParameters(const int &InputPeriod);
+   bool SetContinuousParameters(const int &InputPeriod);
 
    //--- OnTick Functions
    void Update(void);
@@ -161,6 +166,14 @@ public:
    double GetCloseSpreadInPrice(const int InputShift)   const;
    double GetAverageSpreadInPrice(const int InputShift) const;
    
+   //--- Getters --- Continuous Indicator
+   double GetContinuousBullishValue(const int InputShift) const;
+   double GetContinuousBearishValue(const int InputShift) const;
+   double GetContinuousValue(const int InputShift)        const;
+   double GetContinuousDirection(const int InputShift)    const;
+   bool   IsContinuousBullish(const int InputShift)       const;
+   bool   IsContinuousBearish(const int InputShift)       const;
+   
    //--- Getters --- Approximate Past Tick Value
    double GetBidPrice(const int InputShift) const;
    double GetAskPrice(const int InputShift) const;
@@ -180,6 +193,7 @@ private:
    int ExitHandle;
    int ATRHandle;
    int SpreadHandle;
+   int ContinuousHandle;
    
    //--- Indicator Buffers
    double SuperSmootherValueBuffer[];
@@ -189,6 +203,7 @@ private:
    double JurikFilterValueBuffer[], JurikFilterDirectionBuffer[];
    double ATRValueBuffer[];
    double OpenSpreadBuffer[], HighSpreadBuffer[], LowSpreadBuffer[], CloseSpreadBuffer[], AverageSpreadBuffer[];
+   double EhlerFisherContinuousValueBuffer[], EhlerFisherContinuousDirectionBuffer[];
    
    //--- Baseline Indicator Parameters
    int SuperSmootherPeriod;
@@ -208,6 +223,9 @@ private:
    
    //--- ATR Indicator Parameters
    int ATRPeriod;
+   
+   //--- Continuous Parameters
+   int EhlerFisherContinuousPeriod;
    
    //--- Singleton Instance
    static IndicatorProcessor *Instance;
@@ -235,6 +253,9 @@ private:
    
    //--- ATR Indicator Parameters Validation Checks
    bool IsATRIndicatorParametersValid(const int &InputPeriod) const;
+   
+   //--- Continuous Indicator Parameters Validation Checks
+   bool IsContinuousIndicatorParametersValid(const int &InputPeriod) const;
    
    //--- Helper Functions: Parameters Validation Checks
    bool IsPeriodValid(const int &InputPeriod)                                         const;
