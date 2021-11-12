@@ -311,7 +311,8 @@ void SignalGenerator::UpdateLongBridgeTooFarFlag(void) {
 
 //--- Helper Functions: UpdateLongSide --- OnTick Functions
 void SignalGenerator::UpdateLookingForBaselineLongEntryFlag(void) {
-   LookingForBaselineLongEntryFlag = (!LongBridgeTooFarFlag          &&
+   LookingForBaselineLongEntryFlag = (!FirstClosedLongCandleFlag     &&
+                                      !LongBridgeTooFarFlag          &&
                                       !FirstLongEntrySignalFlag      &&
                                       !HasTradedThisCandleLongFlag   &&
                                       IP.IsAboveBaseline(CURRENT_BAR));
@@ -345,7 +346,6 @@ void SignalGenerator::UpdatePullBackLongEntryFlag(void) {
 void SignalGenerator::UpdateLookingForStandardLongEntryFlag(void) {
    LookingForStandardLongEntryFlag = (FirstClosedLongCandleFlag        &&
                                       !FirstLongEntrySignalFlag        &&
-                                      !LookingForBaselineLongEntryFlag &&
                                       !LookingForPullBackLongEntryFlag &&
                                       !HasTradedThisCandleLongFlag     &&
                                       IP.IsAboveBaseline(CURRENT_BAR)  );
@@ -457,7 +457,8 @@ void SignalGenerator::UpdateShortBridgeTooFarFlag(void) {
 
 //--- Helper Functions: UpdateShortSide --- OnTick Functions
 void SignalGenerator::UpdateLookingForBaselineShortEntryFlag(void) {
-   LookingForBaselineShortEntryFlag = (!ShortBridgeTooFarFlag         &&
+   LookingForBaselineShortEntryFlag = (!FirstClosedShortCandleFlag    &&
+                                       !ShortBridgeTooFarFlag         &&
                                        !FirstShortEntrySignalFlag     &&
                                        !HasTradedThisCandleShortFlag  &&
                                        IP.IsBelowBaseline(CURRENT_BAR));
@@ -491,7 +492,6 @@ void SignalGenerator::UpdatePullBackShortEntryFlag(void) {
 void SignalGenerator::UpdateLookingForStandardShortEntryFlag(void) {
    LookingForStandardShortEntryFlag = (FirstClosedShortCandleFlag        &&
                                        !FirstShortEntrySignalFlag        &&
-                                       !LookingForBaselineShortEntryFlag &&
                                        !LookingForPullBackShortEntryFlag &&
                                        !HasTradedThisCandleShortFlag     &&
                                        IP.IsBelowBaseline(CURRENT_BAR)   );

@@ -18,15 +18,27 @@ extern string              Text2                            = "Baseline Indicato
 input  int                 SuperSmootherPeriod              = 20;
 
 extern string              Text3                            = "Primary Indicator Settings";
-input  int                 EhlerFisherPeriod                = 32;
+input  int                 RSIPeriod                        = 14;
+input  int                 RSISmoothingFactor               = 5;
+input  double              QQEFastPeriod                    = 2.618;
+input  double              QQESlowPeriod                    = 4.236;
 
 extern string              Text4                            = "Secondary Indicator Settings";
 input  int                 VortexPeriod                     = 10;
 
 extern string              Text5                            = "Volume Indicator Settings";
+input  int                 FastMACDPeriod                   = 20;
+input  int                 SlowMACDPeriod                   = 40;
+input  int                 BollingerPeriod                  = 20;
+input  double              BollingerDeviation               = 2.0;
+input  int                 Sensitive                        = 150;
+input  int                 DeadZone                         = 2000;
+input  int                 ExplosionPower                   = 15;
+input  int                 TrendPower                       = 400;
+
 input  int                 Viscosity                        = 7;
 input  int                 Sedimentation                    = 25;
-input  double              Threshold                        = 1.5;
+input  double              Threshold                        = 1.3;
 
 extern string              Text6                            = "Exit Indicator Settings";
 input  int                 JurikPeriod                      = 14;
@@ -60,13 +72,14 @@ int OnInit() {
 
 //--- Set Indicators' Parameters
 bool InitIndicators(void) {
-   if (IP.SetBaselineParameters(SuperSmootherPeriod)                        &&
-       IP.SetPrimaryConfirmationParameters(EhlerFisherPeriod)               &&
-       IP.SetSecondaryConfirmationParameters(VortexPeriod)                  &&
-       IP.SetVolumeIndicatorParameters(Viscosity, Sedimentation, Threshold) &&
-       IP.SetExitIndicatorParameters(JurikPeriod, JurikPhase)               &&
-       IP.SetATRParameters(ATRPeriod)                                       &&
-       IP.SetContinuousParameters(EhlerFisherContinuousPeriod)              ) {
+   if (IP.SetBaselineParameters(SuperSmootherPeriod)                                                                                                         &&
+       IP.SetPrimaryConfirmationParameters(RSIPeriod, RSISmoothingFactor, QQEFastPeriod, QQESlowPeriod)                                                      &&
+       IP.SetSecondaryConfirmationParameters(VortexPeriod)                                                                                                   &&
+       IP.SetVolumeIndicatorParameters(FastMACDPeriod, SlowMACDPeriod, BollingerPeriod, BollingerDeviation, Sensitive, DeadZone, ExplosionPower, TrendPower) &&
+       IP.SetSecondVolumeIndicatorParameters(Viscosity, Sedimentation, Threshold)                                                                            &&
+       IP.SetExitIndicatorParameters(JurikPeriod, JurikPhase)                                                                                                &&
+       IP.SetATRParameters(ATRPeriod)                                                                                                                        &&
+       IP.SetContinuousParameters(EhlerFisherContinuousPeriod)                                                                                               ) {
       IP.Init();
       return true;
     }
@@ -77,7 +90,7 @@ void OnTick() {
    Update();
    string DebugMsg;
    //DebugMsg += GF.GetDebugMsg() + "\n";
-   //DebugMsg += IP.GetDebugMsg() + "\n";
+   DebugMsg += IP.GetDebugMsg() + "\n";
    //DebugMsg += SG.GetDebugMsg() + "\n";
    
    datetime Time[];
