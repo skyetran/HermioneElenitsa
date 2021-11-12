@@ -18,10 +18,8 @@
 #define VORTEX_BEARISH_VALUE_BUFFER          1
 
 //--- Volume Indicator
-#define WAE_VOLUME_VALUE_BUFFER              0
-#define WAE_VOLUME_DIRECTION_BUFFER          1
-#define WAE_SIGNAL_LINE_BUFFER               2
-#define WAE_DEATH_ZONE_BUFFER                3
+#define DAMIANI_VOLATMETER_TREND_BUFFER      0
+#define DAMIANI_VOLATMETER_RANGE_BUFFER      1
 
 //--- Exit Indicator
 #define JURIK_FILTER_VALUE_BUFFER            0
@@ -54,10 +52,6 @@
 #define EHLER_FISHER_BULLISH_DIRECTION       1
 #define EHLER_FISHER_BEARISH_DIRECTION       2
 
-//--- WAE Constants
-#define WAE_BULLISH_DIRECTION                1
-#define WAE_BEARISH_DIRECTION                2
-
 //--- Jurik Filter Constants
 #define JURIK_BULLISH_DIRECTION              0
 #define JURIK_BEARISH_DIRECTION              1
@@ -78,10 +72,7 @@ public:
    bool SetBaselineParameters(const int &InputPeriod);
    bool SetPrimaryConfirmationParameters(const int &InputPeriod);
    bool SetSecondaryConfirmationParameters(const int &InputPeriod);
-   bool SetVolumeIndicatorParameters(const int &InputFastMACDPeriod, const int &InputSlowMACDPeriod,
-                                     const int &InputBollingerPeriod, const double &InputBollingerDeviation,
-                                     const int &InputSensitive, const int &InputDeadZone,
-                                     const int &InputExplosionPower, const int &InputTrendPower);
+   bool SetVolumeIndicatorParameters(const int &InputVisosity, const int &InputSedimentation, const double &InputThreshold);
    bool SetExitIndicatorParameters(const int &InputPeriod, const int &InputPhase);
    bool SetATRParameters(const int &InputPeriod);
    bool SetContinuousParameters(const int &InputPeriod);
@@ -112,14 +103,10 @@ public:
    bool   IsSecondaryConfirmationBearish(const int InputShift)       const;
    
    //--- Getters --- Volume Indicator
-   bool   IsDeadMarket(const int InputShift)          const;
-   bool   IsActiveMarket(const int InputShift)        const;
-   bool   IsActiveBullishMarket(const int InputShift) const;
-   bool   IsActiveBearishMarket(const int InputShift) const;
-   double GetVolumeValue(const int InputShift)        const;
-   double GetVolumeDirection(const int InputShift)    const;
-   double GetWAESignalValue(const int InputShift)     const;
-   double GetWAEDeathZone(const int InputShift)       const;
+   bool   IsDeadMarket(const int InputShift)        const;
+   bool   IsActiveMarket(const int InputShift)      const;
+   double GetVolumeTrendValue(const int InputShift) const;
+   double GetVolumeRangeValue(const int InputShift) const;
    
    //--- Getters --- Exit Indicator
    bool   ShouldExitLongFromExitIndicator(const int InputShift)  const;
@@ -199,7 +186,7 @@ private:
    double SuperSmootherValueBuffer[];
    double EhlerFisherValueBuffer[], EhlerFisherDirectionBuffer[];
    double VortexBullishValueBuffer[], VortexBearishValueBuffer[];
-   double WAEVolumeValueBuffer[], WAEVolumeDirectionBuffer[], WAESignalValueBuffer[], WAEDeathZoneBuffer[];
+   double VolumeTrendValueBuffer[], VolumeRangeValueBuffer[];
    double JurikFilterValueBuffer[], JurikFilterDirectionBuffer[];
    double ATRValueBuffer[];
    double OpenSpreadBuffer[], HighSpreadBuffer[], LowSpreadBuffer[], CloseSpreadBuffer[], AverageSpreadBuffer[];
@@ -215,8 +202,8 @@ private:
    int VortexPeriod;
    
    //--- Volume Indicator Parameters
-   int    FastMACDPeriod, SlowMACDPeriod, BollingerPeriod, Sensitive, DeathZone, ExplosionPower, TrendPower;
-   double BollingerDeviation;
+   int    Viscosity, Sedimentation;
+   double Threshold;
    
    //--- Exit Indicator Parameters
    int JurikPeriod, JurikPhase;
@@ -243,10 +230,7 @@ private:
    bool IsSecondaryConfirmationIndicatorParametersValid(const int &InputPeriod) const;
 
    //--- Volume Indicator Parameters Validation Checks
-   bool IsVolumeIndicatorParametersValid(const int &InputFastMACDPeriod, const int &InputSlowMACDPeriod,
-                                         const int &InputBollingerPeriod, const double &InputBollingerDeviation,
-                                         const int &InputSensitive, const int &InputDeadZone,
-                                         const int &InputExplosionPower, const int &InputTrendPower) const;
+   bool IsVolumeIndicatorParametersValid(const int &InputViscosity, const int &InputSedimentation, const double &InputThreshold) const;
    
    //--- Exit Indicator Parameters Validation Checks
    bool IsExitIndicatorParametersValid(const int &InputPeriod, const int &InputPhase) const;

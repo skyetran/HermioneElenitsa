@@ -13,10 +13,8 @@ IndicatorProcessor::IndicatorProcessor(void) {
    ArraySetAsSeries(EhlerFisherDirectionBuffer          , true);
    ArraySetAsSeries(VortexBullishValueBuffer            , true);
    ArraySetAsSeries(VortexBearishValueBuffer            , true);
-   ArraySetAsSeries(WAEVolumeValueBuffer                , true);
-   ArraySetAsSeries(WAEVolumeDirectionBuffer            , true);
-   ArraySetAsSeries(WAESignalValueBuffer                , true);
-   ArraySetAsSeries(WAEDeathZoneBuffer                  , true);
+   ArraySetAsSeries(VolumeTrendValueBuffer              , true);
+   ArraySetAsSeries(VolumeRangeValueBuffer              , true);
    ArraySetAsSeries(JurikFilterValueBuffer              , true);
    ArraySetAsSeries(JurikFilterDirectionBuffer          , true);
    ArraySetAsSeries(ATRValueBuffer                      , true);
@@ -49,8 +47,7 @@ string IndicatorProcessor::GetDebugMsg(void) const {
    Msg += "Is Secondary Confirmation Bullish: " + (IsSecondaryConfirmationBullish(CURRENT_BAR)   ? "Yes" : "No") + "\n";
    Msg += "Is Secondary Confirmation Bearish: " + (IsSecondaryConfirmationBearish(CURRENT_BAR)   ? "Yes" : "No") + "\n";
    Msg += "Is Dead Market: "                    + (IsDeadMarket(CURRENT_BAR)                     ? "Yes" : "No") + "\n";
-   Msg += "Is Active Bullish Market: "          + (IsActiveBullishMarket(CURRENT_BAR)            ? "Yes" : "No") + "\n";
-   Msg += "Is Active Bearish Market: "          + (IsActiveBearishMarket(CURRENT_BAR)            ? "Yes" : "No") + "\n";
+   Msg += "Is Active Market: "                  + (IsActiveMarket(CURRENT_BAR)                   ? "Yes" : "No") + "\n";
    Msg += "Should Exit Long: "                  + (ShouldExitLongFromExitIndicator(CURRENT_BAR)  ? "Yes" : "No") + "\n";
    Msg += "Should Exit Short: "                 + (ShouldExitShortFromExitIndicator(CURRENT_BAR) ? "Yes" : "No") + "\n";
    Msg += "ATR Value: "                         + DoubleToString(GetATRValue(CURRENT_BAR))                       + "\n";
@@ -67,7 +64,7 @@ void IndicatorProcessor::Init(void) {
    BaselineHandle              = iCustom(SymbolInfo.Name(), PERIOD_D1, "twopolesupersmootherfilter", SuperSmootherPeriod);
    PrimaryConfirmationHandle   = iCustom(SymbolInfo.Name(), PERIOD_D1, "Ehlers Fisher transform (original)", EhlerFisherPeriod);
    SecondaryConfirmationHandle = iCustom(SymbolInfo.Name(), PERIOD_D1, "Vortex", VortexPeriod);
-   VolumeHandle                = iCustom(SymbolInfo.Name(), PERIOD_D1, "waddah_attar_explosion", FastMACDPeriod, SlowMACDPeriod, BollingerPeriod, BollingerDeviation, Sensitive, DeathZone, ExplosionPower, TrendPower);
+   VolumeHandle                = iCustom(SymbolInfo.Name(), PERIOD_D1, "Damiani_Volatmeter", Viscosity, Sedimentation, Threshold);
    ExitHandle                  = iCustom(SymbolInfo.Name(), PERIOD_D1, "jurik_filter", JurikPeriod, JurikPhase);
    ATRHandle                   = iCustom(SymbolInfo.Name(), PERIOD_D1, "Examples/ATR", ATRPeriod);
    SpreadHandle                = iCustom(SymbolInfo.Name(), PERIOD_D1, "Spread_Record");
@@ -111,35 +108,21 @@ bool IndicatorProcessor::SetSecondaryConfirmationParameters(const int &InputPeri
 bool IndicatorProcessor::IsSecondaryConfirmationIndicatorParametersValid(const int &InputPeriod) const { return IsPeriodValid(InputPeriod); }
 
 //--- Setters --- OnInit Functions
-bool IndicatorProcessor::SetVolumeIndicatorParameters(const int &InputFastMACDPeriod, const int &InputSlowMACDPeriod,
-                                                      const int &InputBollingerPeriod, const double &InputBollingerDeviation,
-                                                      const int &InputSensitive, const int &InputDeadZone,
-                                                      const int &InputExplosionPower, const int &InputTrendPower) {
-   if (IsVolumeIndicatorParametersValid(InputFastMACDPeriod, InputSlowMACDPeriod, InputBollingerPeriod, InputBollingerDeviation,
-                                        InputSensitive, InputDeadZone, InputExplosionPower, InputTrendPower)) {
-      FastMACDPeriod     = InputFastMACDPeriod;
-      SlowMACDPeriod     = InputSlowMACDPeriod;
-      BollingerPeriod    = InputBollingerPeriod;
-      BollingerDeviation = InputBollingerDeviation;
-      Sensitive          = InputSensitive;
-      DeathZone          = InputDeadZone;
-      ExplosionPower     = InputExplosionPower;
-      TrendPower         = InputTrendPower;
+bool IndicatorProcessor::SetVolumeIndicatorParameters(const int &InputViscosity, const int &InputSedimentation, const double &InputThreshold) {
+   if (IsVolumeIndicatorParametersValid(InputViscosity, InputSedimentation, InputThreshold)) {
+      Viscosity     = InputViscosity;
+      Sedimentation = InputSedimentation;
+      Threshold     = InputThreshold;
       return true;
    }
    return false;
 }
 
 //--- Volume Indicator Parameters Validation Checks
-bool IndicatorProcessor::IsVolumeIndicatorParametersValid(const int &InputFastMACDPeriod, const int &InputSlowMACDPeriod,
-                                                          const int &InputBollingerPeriod, const double &InputBollingerDeviation,
-                                                          const int &InputSensitive, const int &InputDeadZone,
-                                                          const int &InputExplosionPower, const int &InputTrendPower) const {
-   return IsPeriodValid(InputFastMACDPeriod) && IsPeriodValid(InputSlowMACDPeriod) &&
-          IsFastSlowPeriodValid(InputFastMACDPeriod, InputSlowMACDPeriod) &&
-          IsPeriodValid(InputBollingerPeriod) && IsParameterGreaterThanZero(InputBollingerDeviation) &&
-          IsParameterGreaterThanZero(InputSensitive) && IsParameterGreaterThanZero(InputExplosionPower) &&
-          IsParameterGreaterThanZero(InputTrendPower);
+bool IndicatorProcessor::IsVolumeIndicatorParametersValid(const int &InputViscosity, const int &InputSedimentation, const double &InputThreshold) const {
+   return IsParameterGreaterThanZero(InputViscosity)      &&
+          IsParameterGreaterThanZero(InputSedimentation) &&
+          IsParameterGreaterThanZero(InputThreshold)      ;
 }
 
 //--- Setters --- OnInit Functions
@@ -202,10 +185,8 @@ void IndicatorProcessor::UpdateAllIndicators(void) {
    CopyBuffer(PrimaryConfirmationHandle  , EHLER_FISHER_DIRECTION_BUFFER     , 0, INDICATOR_BUFFER_SIZE, EhlerFisherDirectionBuffer);
    CopyBuffer(SecondaryConfirmationHandle, VORTEX_BULLISH_VALUE_BUFFER       , 0, INDICATOR_BUFFER_SIZE, VortexBullishValueBuffer);
    CopyBuffer(SecondaryConfirmationHandle, VORTEX_BEARISH_VALUE_BUFFER       , 0, INDICATOR_BUFFER_SIZE, VortexBearishValueBuffer);
-   CopyBuffer(VolumeHandle               , WAE_VOLUME_VALUE_BUFFER           , 0, INDICATOR_BUFFER_SIZE, WAEVolumeValueBuffer);
-   CopyBuffer(VolumeHandle               , WAE_VOLUME_DIRECTION_BUFFER       , 0, INDICATOR_BUFFER_SIZE, WAEVolumeDirectionBuffer);
-   CopyBuffer(VolumeHandle               , WAE_SIGNAL_LINE_BUFFER            , 0, INDICATOR_BUFFER_SIZE, WAESignalValueBuffer);
-   CopyBuffer(VolumeHandle               , WAE_DEATH_ZONE_BUFFER             , 0, INDICATOR_BUFFER_SIZE, WAEDeathZoneBuffer);
+   CopyBuffer(VolumeHandle               , DAMIANI_VOLATMETER_TREND_BUFFER   , 0, INDICATOR_BUFFER_SIZE, VolumeTrendValueBuffer);
+   CopyBuffer(VolumeHandle               , DAMIANI_VOLATMETER_RANGE_BUFFER   , 0, INDICATOR_BUFFER_SIZE, VolumeRangeValueBuffer);
    CopyBuffer(ExitHandle                 , JURIK_FILTER_VALUE_BUFFER         , 0, INDICATOR_BUFFER_SIZE, JurikFilterValueBuffer);
    CopyBuffer(ExitHandle                 , JURIK_FILTER_DIRECTION_BUFFER     , 0, INDICATOR_BUFFER_SIZE, JurikFilterDirectionBuffer);
    CopyBuffer(ATRHandle                  , ATR_VALUE_BUFFER                  , 0, INDICATOR_BUFFER_SIZE, ATRValueBuffer);
@@ -292,27 +273,10 @@ double IndicatorProcessor::GetSecondaryConfirmationBullishValue(const int InputS
 double IndicatorProcessor::GetSecondaryConfirmationBearishValue(const int InputShift) const { return NormalizeDouble(VortexBearishValueBuffer[InputShift], SymbolInfo.Digits());                          }
 
 //--- Getters --- Volume Indicator
-bool IndicatorProcessor::IsDeadMarket(const int InputShift)   const { return !IsActiveBullishMarket(InputShift) || !IsActiveBearishMarket(InputShift); }
-bool IndicatorProcessor::IsActiveMarket(const int InputShift) const { return IsActiveBullishMarket(InputShift) || IsActiveBearishMarket(InputShift);   }
-
-//--- Getters --- Volume Indicator
-bool IndicatorProcessor::IsActiveBullishMarket(const int InputShift) const {
-   return GetVolumeValue(InputShift) > GetWAESignalValue(InputShift) &&
-          GetVolumeValue(InputShift) > GetWAEDeathZone(InputShift)   &&
-          GetVolumeDirection(InputShift) == WAE_BULLISH_DIRECTION     ;
-}
-
-//--- Getters --- Volume Indicator
-bool IndicatorProcessor::IsActiveBearishMarket(const int InputShift) const {
-   return GetVolumeValue(InputShift) > GetWAESignalValue(InputShift) &&
-          GetVolumeValue(InputShift) > GetWAEDeathZone(InputShift)   &&
-          GetVolumeDirection(InputShift) == WAE_BEARISH_DIRECTION     ;
-}
-
-double IndicatorProcessor::GetVolumeValue(const int InputShift)     const { return NormalizeDouble(WAEVolumeValueBuffer[InputShift], SymbolInfo.Digits());     }
-double IndicatorProcessor::GetVolumeDirection(const int InputShift) const { return WAEVolumeDirectionBuffer[InputShift];                                       }
-double IndicatorProcessor::GetWAESignalValue(const int InputShift)  const { return NormalizeDouble(WAESignalValueBuffer[InputShift], SymbolInfo.Digits());     }
-double IndicatorProcessor::GetWAEDeathZone(const int InputShift)    const { return NormalizeDouble(WAEDeathZoneBuffer[InputShift]  , SymbolInfo.Digits());     }
+bool   IndicatorProcessor::IsDeadMarket(const int InputShift)   const { return !IsActiveMarket(InputShift);                                                   }
+bool   IndicatorProcessor::IsActiveMarket(const int InputShift) const { return GetVolumeTrendValue(InputShift) >= GetVolumeRangeValue(InputShift);            }
+double IndicatorProcessor::GetVolumeTrendValue(const int InputShift) const { return NormalizeDouble(VolumeTrendValueBuffer[InputShift], SymbolInfo.Digits()); }
+double IndicatorProcessor::GetVolumeRangeValue(const int InputShift) const { return NormalizeDouble(VolumeRangeValueBuffer[InputShift], SymbolInfo.Digits()); }
 
 //--- Getters --- Exit Indicator
 bool   IndicatorProcessor::ShouldExitLongFromExitIndicator(const int InputShift)  const { return IsExitBearish(InputShift);                                                    }

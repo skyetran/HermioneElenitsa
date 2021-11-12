@@ -554,7 +554,7 @@ bool SignalGenerator::IndicatorsGiveStandardLongSignal(const int InputShift) con
           IP.IsPrimaryConfirmationBullish(InputShift)   &&
           IP.IsSecondaryConfirmationBullish(InputShift) &&
           IP.IsActiveMarket(InputShift)                 &&
-          IP.IsWithInXATRValue(InputShift, ATRMultiplier)          ;
+          IP.IsWithInXATRValue(InputShift, ATRMultiplier);
 }
 
 //--- Helper Functions: Line Up Indicator Signals
@@ -564,7 +564,7 @@ bool SignalGenerator::IndicatorsGiveStandardShortSignal(const int InputShift) co
           IP.IsPrimaryConfirmationBearish(InputShift)   &&
           IP.IsSecondaryConfirmationBearish(InputShift) &&
           IP.IsActiveMarket(InputShift)                 &&
-          IP.IsWithInXATRValue(InputShift, ATRMultiplier)          ;
+          IP.IsWithInXATRValue(InputShift, ATRMultiplier);
 }
 
 //--- Helper Functions: Line Up Indicator Signals
